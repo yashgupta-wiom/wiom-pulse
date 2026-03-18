@@ -1,0 +1,1056 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wiom Pulse — Release Intelligence Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+/* ===== RESET & BASE ===== */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --pink:#D9008D;--yellow:#FED800;--yellow-text:#B8900A;--bg:#ffffff;--bg2:#f5f5f8;
+  --text:#1a1a2e;--muted:#555570;--card:rgba(0,0,0,0.04);
+  --border:rgba(217,0,141,0.2);--glow:rgba(217,0,141,0.3);
+  --red:#E03030;--green:#1FAD4E;--amber:#E5A100;
+}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:'Noto Sans',sans-serif}
+
+/* ===== BACKGROUND PARTICLES ===== */
+#bg-canvas{position:fixed;inset:0;z-index:0;pointer-events:none}
+
+/* ===== PROGRESS BAR ===== */
+#progress{position:fixed;top:0;left:0;height:3px;background:linear-gradient(90deg,var(--pink),var(--yellow));z-index:1000;transition:width .5s cubic-bezier(.4,0,.2,1)}
+
+/* ===== SLIDE WRAPPER ===== */
+#deck{position:relative;width:100%;height:100%;overflow:hidden}
+.slide{
+  position:absolute;inset:0;display:flex;flex-direction:column;
+  justify-content:center;align-items:center;padding:60px 80px;
+  opacity:0;transform:translateX(60px);pointer-events:none;
+  transition:opacity .6s cubic-bezier(.4,0,.2,1),transform .6s cubic-bezier(.4,0,.2,1);
+  z-index:1;
+}
+.slide.active{opacity:1;transform:translateX(0);pointer-events:auto;z-index:2}
+.slide.left{opacity:0;transform:translateX(-60px)}
+
+.slide-inner{max-width:1200px;width:100%;position:relative;z-index:1}
+
+/* ===== NAV DOTS ===== */
+#nav{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);display:flex;gap:8px;z-index:100}
+.dot{
+  width:10px;height:10px;border-radius:50%;background:rgba(0,0,0,0.12);
+  cursor:pointer;transition:all .3s;border:none;outline:none;
+}
+.dot.active{background:var(--pink);box-shadow:0 0 8px var(--glow);transform:scale(1.3)}
+.dot:hover{background:var(--pink);opacity:.7}
+
+/* ===== SLIDE NUMBER ===== */
+#slide-num{position:fixed;bottom:26px;right:40px;font-size:14px;color:var(--muted);z-index:100}
+
+/* ===== TYPOGRAPHY ===== */
+h1{font-size:clamp(48px,6vw,96px);font-weight:700;line-height:1.1;margin-bottom:16px}
+h2{font-size:clamp(32px,4vw,48px);font-weight:700;line-height:1.2;margin-bottom:12px}
+h3{font-size:clamp(18px,2vw,28px);font-weight:700;margin-bottom:8px}
+p,.desc{font-size:clamp(16px,1.5vw,20px);line-height:1.6;color:var(--muted)}
+.accent{color:var(--pink)}.accent-y{color:var(--yellow-text)}
+.gradient-text{background:linear-gradient(135deg,var(--pink),var(--yellow));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.tagline{font-size:clamp(16px,1.5vw,20px);color:var(--muted);font-style:italic;margin-top:12px}
+
+/* ===== LOGO / INFINITY ===== */
+.infinity{
+  display:inline-block;font-size:1.2em;
+  background:linear-gradient(135deg,var(--pink),var(--yellow));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  animation:pulse-glow 3s ease-in-out infinite;
+}
+@keyframes pulse-glow{0%,100%{filter:drop-shadow(0 0 6px rgba(217,0,141,0.5))}50%{filter:drop-shadow(0 0 18px rgba(217,0,141,0.8))}}
+
+/* ===== BRAND BAR ===== */
+.brand-bar{display:flex;align-items:center;gap:10px;font-size:15px;color:var(--muted);margin-top:32px}
+.brand-bar .logo-inf{font-size:20px}
+
+/* ===== CARDS / MODULES ===== */
+.card{
+  background:#f8f8fc;border:1px solid var(--border);border-radius:12px;
+  padding:20px 24px;transition:transform .3s,box-shadow .3s;
+  box-shadow:0 1px 4px rgba(0,0,0,0.06);
+}
+.card:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(217,0,141,0.12)}
+.card h3{font-size:18px;margin-bottom:6px}
+.card p{font-size:15px;line-height:1.5}
+
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.grid-5{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+
+/* ===== PHASE BADGE ===== */
+.phase-badge{
+  display:inline-block;padding:4px 14px;border-radius:20px;font-size:14px;font-weight:700;
+  text-transform:uppercase;letter-spacing:1px;margin-bottom:16px;
+}
+.pb-1{background:rgba(217,0,141,0.15);color:var(--pink);border:1px solid rgba(217,0,141,0.3)}
+.pb-2{background:rgba(254,216,0,0.1);color:var(--yellow-text);border:1px solid rgba(254,216,0,0.3)}
+.pb-3{background:rgba(254,216,0,0.1);color:var(--yellow-text);border:1px solid rgba(254,216,0,0.3)}
+.pb-4{background:rgba(217,0,141,0.1);color:#D9008D;border:1px solid rgba(217,0,141,0.3)}
+
+/* ===== CHAOS VIS ===== */
+.chaos-grid{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin:24px 0}
+.chaos-node{
+  padding:8px 16px;border-radius:8px;font-size:14px;font-weight:700;
+  background:rgba(0,0,0,0.02);border:1px solid rgba(0,0,0,0.08);
+  animation:float-chaos 4s ease-in-out infinite;
+}
+.chaos-node:nth-child(odd){animation-delay:-2s}
+.chaos-node:nth-child(3n){animation-delay:-1s}
+@keyframes float-chaos{0%,100%{transform:translate(0,0) rotate(0deg)}25%{transform:translate(4px,-6px) rotate(1deg)}75%{transform:translate(-4px,4px) rotate(-1deg)}}
+.chaos-node.jira{border-color:rgba(217,0,141,0.4);color:#e84aad}
+.chaos-node.meta{border-color:rgba(254,216,0,0.4);color:var(--yellow-text)}
+.chaos-node.ct{border-color:rgba(254,216,0,0.4);color:var(--yellow-text)}
+.chaos-node.stake{border-color:rgba(217,0,141,0.3);color:var(--pink)}
+.chaos-node.pod{border-color:rgba(254,216,0,0.4);color:var(--yellow-text)}
+
+/* disconnected lines */
+.disconnect{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:16px;margin:4px 0}
+.disconnect .line{flex:1;height:1px;background:repeating-linear-gradient(90deg,rgba(0,0,0,0.15) 0 6px,transparent 6px 12px)}
+.disconnect .x-mark{color:var(--red);font-weight:700}
+
+/* ===== FLOW / CONNECTED ===== */
+.flow-row{display:flex;align-items:center;gap:0;margin:20px 0;flex-wrap:wrap;justify-content:center}
+.flow-box{
+  padding:12px 20px;border-radius:10px;font-size:15px;font-weight:700;
+  background:var(--card);border:1px solid var(--border);text-align:center;min-width:120px;
+}
+.flow-arrow{font-size:22px;color:var(--pink);margin:0 6px}
+
+/* ===== PHASE PIPELINE ===== */
+.pipeline{display:flex;align-items:center;justify-content:center;gap:0;margin:28px 0}
+.pipe-stage{
+  padding:14px 24px;font-size:16px;font-weight:700;text-align:center;
+  position:relative;min-width:160px;
+}
+.pipe-stage small{font-size:13px}
+.pipe-stage:not(:last-child)::after{content:'';position:absolute;right:-16px;top:50%;transform:translateY(-50%);border:8px solid transparent;border-left-color:var(--pink)}
+.pipe-1{background:rgba(217,0,141,0.12);border-radius:10px 0 0 10px;color:var(--pink)}
+.pipe-2{background:rgba(254,216,0,0.1);color:var(--yellow-text)}
+.pipe-3{background:rgba(254,216,0,0.08);color:var(--yellow-text)}
+.pipe-4{background:rgba(217,0,141,0.08);border-radius:0 10px 10px 0;color:#D9008D}
+
+/* ===== SAMPLE OUTPUT ===== */
+.sample{
+  background:#f0f0f6;border:1px solid rgba(0,0,0,0.08);
+  border-left:3px solid var(--pink);
+  border-radius:8px;padding:12px 16px;font-size:14px;line-height:1.6;
+  color:var(--muted);font-family:'Noto Sans',monospace;margin-top:8px;
+}
+.sample .label{color:var(--pink);font-weight:700}
+.sample .val{color:var(--text)}
+
+/* ===== TABLE ===== */
+.compare-table{width:100%;border-collapse:collapse;margin-top:20px;font-size:16px}
+.compare-table th{
+  padding:12px 16px;text-align:left;font-weight:700;
+  border-bottom:2px solid var(--pink);color:var(--muted);font-size:14px;text-transform:uppercase;letter-spacing:1px;
+}
+.compare-table td{padding:12px 16px;border-bottom:1px solid rgba(0,0,0,0.06)}
+.compare-table tr:hover td{background:rgba(217,0,141,0.06)}
+.compare-table .old{color:var(--red)}
+.compare-table .new{color:var(--green);font-weight:700}
+
+/* ===== CHANNEL CARDS ===== */
+.channel{display:flex;align-items:flex-start;gap:12px;padding:14px;border-radius:10px;background:var(--card);border:1px solid rgba(0,0,0,0.06)}
+.channel-icon{font-size:24px;min-width:36px;text-align:center}
+.channel h4{font-size:16px;font-weight:700;margin-bottom:4px}
+.channel p{font-size:14px;color:var(--muted);line-height:1.4}
+
+/* ===== ARCHITECTURE DIAGRAM ===== */
+.arch{display:flex;flex-direction:column;align-items:center;gap:4px;margin:16px 0}
+.arch-row{display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap}
+.arch-box{
+  padding:12px 22px;border-radius:8px;font-size:14px;font-weight:700;
+  text-align:center;min-width:100px;
+}
+.arch-src{background:rgba(217,0,141,0.1);border:1px solid rgba(217,0,141,0.3);color:#D9008D}
+.arch-core{background:rgba(217,0,141,0.12);border:1px solid rgba(217,0,141,0.3);color:var(--pink);padding:16px 28px;font-size:15px}
+.arch-phase{background:rgba(254,216,0,0.08);border:1px solid rgba(254,216,0,0.2);color:var(--yellow-text)}
+.arch-pers{background:rgba(254,216,0,0.08);border:1px solid rgba(254,216,0,0.2);color:var(--yellow-text)}
+.arch-out{background:rgba(254,216,0,0.08);border:1px solid rgba(254,216,0,0.2);color:var(--yellow-text)}
+.arch-arrow{font-size:22px;color:var(--pink);margin:6px 0}
+.arch-arrow-h{font-size:18px;color:var(--pink);margin:0 4px}
+
+/* ===== ANIMATIONS ===== */
+.slide.active .fade-up{animation:fadeUp .7s ease both}
+.slide.active .fade-up-d1{animation:fadeUp .7s .1s ease both}
+.slide.active .fade-up-d2{animation:fadeUp .7s .2s ease both}
+.slide.active .fade-up-d3{animation:fadeUp .7s .3s ease both}
+.slide.active .fade-up-d4{animation:fadeUp .7s .4s ease both}
+.slide.active .fade-up-d5{animation:fadeUp .7s .5s ease both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+
+.slide.active .fade-in{animation:fadeIn .8s ease both}
+.slide.active .fade-in-d1{animation:fadeIn .8s .15s ease both}
+.slide.active .fade-in-d2{animation:fadeIn .8s .3s ease both}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+
+.slide.active .scale-in{animation:scaleIn .6s .2s ease both}
+@keyframes scaleIn{from{opacity:0;transform:scale(0.85)}to{opacity:1;transform:scale(1)}}
+
+/* ===== CTA SLIDE ===== */
+.cta-big{
+  font-size:clamp(24px,2.5vw,32px);font-weight:700;line-height:1.5;
+  max-width:900px;text-align:center;margin:24px auto;
+}
+.cta-build{
+  display:inline-block;margin-top:28px;padding:14px 44px;
+  background:linear-gradient(135deg,var(--pink),#ff2090);
+  border-radius:40px;font-size:20px;font-weight:700;color:#fff;
+  box-shadow:0 4px 30px rgba(217,0,141,0.4);
+  animation:cta-pulse 2s ease-in-out infinite;
+}
+@keyframes cta-pulse{0%,100%{box-shadow:0 4px 30px rgba(217,0,141,0.4)}50%{box-shadow:0 4px 50px rgba(217,0,141,0.7)}}
+
+/* ===== RESPONSIVE ===== */
+@media(max-width:900px){
+  .slide{padding:40px 28px}
+  .grid-2,.grid-3,.grid-4,.grid-5{grid-template-columns:1fr}
+  .pipeline{flex-direction:column;gap:8px}
+  .pipe-stage:not(:last-child)::after{display:none}
+  .flow-row{flex-direction:column}
+  .arch-row{flex-direction:column}
+  .compare-table{font-size:12px}
+  .compare-table th,.compare-table td{padding:8px}
+}
+
+/* ===== MOBILE WIDGET MOCKUP ===== */
+.widget-phone{
+  width:180px;min-width:180px;height:320px;background:#f0f0f4;border:2px solid #c8c8d4;border-radius:28px;
+  position:relative;display:flex;flex-direction:column;align-items:center;padding:12px 14px 10px;
+  box-shadow:0 8px 30px rgba(0,0,0,0.1);flex-shrink:0;
+}
+.widget-notch{width:60px;height:8px;background:#c8c8d4;border-radius:4px;margin-bottom:6px}
+.widget-time{font-size:28px;font-weight:700;color:var(--text);margin-bottom:16px}
+.widget-card{
+  width:100%;background:#fff;border-radius:14px;padding:12px;
+  box-shadow:0 2px 12px rgba(217,0,141,0.12);border:1px solid rgba(217,0,141,0.15);
+  animation:widgetGlow 3s ease-in-out infinite;
+}
+@keyframes widgetGlow{
+  0%,100%{box-shadow:0 2px 12px rgba(217,0,141,0.12)}
+  50%{box-shadow:0 2px 24px rgba(217,0,141,0.25)}
+}
+.widget-header{font-size:11px;font-weight:700;color:var(--pink);margin-bottom:8px;display:flex;align-items:center;gap:4px}
+.widget-inf{font-size:14px;background:linear-gradient(135deg,var(--pink),var(--yellow));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.widget-stats{display:flex;align-items:center;justify-content:space-around;margin-bottom:8px}
+.widget-stat{text-align:center}
+.widget-num{font-size:20px;font-weight:700;color:var(--pink);display:block}
+.widget-lbl{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px}
+.widget-divider{width:1px;height:28px;background:#e0e0e8}
+.widget-footer{font-size:8px;color:var(--muted);line-height:1.4;border-top:1px solid #f0f0f4;padding-top:6px}
+.widget-icons{display:flex;gap:16px;margin-top:auto;padding-top:12px}
+.widget-icon-dot{width:12px;height:12px;border-radius:50%;background:#d0d0d8}
+.widget-anim-1{animation:widgetCount 4s ease-in-out infinite}
+.widget-anim-2{animation:widgetCount 4s 0.3s ease-in-out infinite}
+.widget-anim-3{animation:widgetCount 4s 0.6s ease-in-out infinite}
+@keyframes widgetCount{
+  0%,100%{transform:scale(1)}
+  50%{transform:scale(1.15)}
+}
+
+/* ===== DESKTOP WIDGET MOCKUP ===== */
+.desktop-frame{
+  width:100%;max-width:280px;margin:0 auto;background:#fff;border:2px solid #c8c8d4;border-radius:10px;overflow:hidden;
+  box-shadow:0 4px 16px rgba(0,0,0,0.08);
+}
+.desktop-bar{display:flex;align-items:center;gap:5px;padding:6px 10px;background:#f0f0f4;border-bottom:1px solid #d8d8e0}
+.desktop-dot{width:8px;height:8px;border-radius:50%}
+.desktop-screen{min-height:130px;background:#fff;padding:12px;display:flex;align-items:center;justify-content:center}
+.desktop-widget-card{
+  background:#fff;border:1px solid rgba(217,0,141,0.15);border-radius:10px;padding:10px 14px;
+  box-shadow:0 2px 12px rgba(217,0,141,0.1);animation:widgetGlow 3s ease-in-out infinite;
+  width:100%;
+}
+@keyframes dashOpen{from{opacity:0;transform:scale(0.8)}to{opacity:1;transform:scale(1)}}
+
+/* scrollbar for overflow cards */
+.scroll-area{max-height:60vh;overflow-y:auto;padding-right:8px;padding-bottom:20px}
+.scroll-area::-webkit-scrollbar{width:4px}
+.scroll-area::-webkit-scrollbar-thumb{background:var(--pink);border-radius:4px}
+
+/* ===== DISTRIBUTION ANIMATED MOCKUPS ===== */
+.dist-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:20px}
+.dist-card{background:#f8f8fc;border:1px solid var(--border);border-radius:12px;padding:16px;box-shadow:0 1px 4px rgba(0,0,0,0.06);overflow:hidden}
+.dist-card .dist-label{font-size:16px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.dist-mockup{position:relative;min-height:120px;border-radius:8px;overflow:hidden}
+
+/* WhatsApp phone frame */
+.wa-phone{background:#e5ddd5;border-radius:10px;padding:12px;min-height:110px;position:relative}
+.wa-bubble{background:#dcf8c6;border-radius:8px 8px 8px 2px;padding:8px 12px;font-size:13px;color:#303030;max-width:85%;opacity:0;transform:translateY(10px);animation:waBubble 7s ease-in-out infinite}
+.wa-bubble:nth-child(2){animation-delay:2s;margin-top:8px;background:#fff;border-radius:8px 8px 2px 8px;margin-left:auto}
+@keyframes waBubble{0%,10%{opacity:0;transform:translateY(10px)}15%,85%{opacity:1;transform:translateY(0)}90%,100%{opacity:0;transform:translateY(-5px)}}
+.wa-typing{display:flex;gap:3px;padding:8px 12px;background:#fff;border-radius:8px;width:fit-content;margin-top:6px;opacity:0;animation:waTyping 7s ease-in-out infinite}
+.wa-typing span{width:6px;height:6px;border-radius:50%;background:#999;animation:waTypeDot 1.2s ease-in-out infinite}
+.wa-typing span:nth-child(2){animation-delay:0.2s}
+.wa-typing span:nth-child(3){animation-delay:0.4s}
+@keyframes waTyping{0%,5%{opacity:1}12%,100%{opacity:0}}
+@keyframes waTypeDot{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+
+/* Email inbox */
+.email-inbox{background:#fff;border-radius:8px;border:1px solid #e0e0e0;overflow:hidden}
+.email-header{background:#f5f5f5;padding:6px 12px;font-size:11px;color:#888;border-bottom:1px solid #e0e0e0;text-transform:uppercase;letter-spacing:1px}
+.email-row{padding:10px 12px;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;gap:10px;font-size:13px;transform:translateX(100%);opacity:0;animation:emailSlide 7s ease-in-out infinite}
+.email-row:nth-child(3){animation-delay:0.8s}
+.email-row:nth-child(4){animation-delay:1.6s}
+.email-row .email-dot{width:8px;height:8px;border-radius:50%;background:var(--pink);flex-shrink:0}
+.email-row .email-subj{font-weight:700;color:var(--text)}
+.email-row .email-preview{color:var(--muted);font-size:12px;margin-left:auto;white-space:nowrap}
+@keyframes emailSlide{0%,5%{transform:translateX(100%);opacity:0}15%,80%{transform:translateX(0);opacity:1}90%,100%{transform:translateX(0);opacity:0}}
+
+/* Slack message */
+.slack-msg-area{background:#fff;border-radius:8px;border:1px solid #e0e0e0;padding:12px}
+.slack-msg{display:flex;gap:8px;align-items:flex-start;opacity:0;animation:slackFade 8s ease-in-out infinite}
+.slack-avatar{width:28px;height:28px;border-radius:4px;background:linear-gradient(135deg,var(--pink),#ff2090);flex-shrink:0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700}
+.slack-body{flex:1}
+.slack-name{font-size:13px;font-weight:700;color:var(--text)}
+.slack-name .slack-badge{background:rgba(217,0,141,0.15);color:var(--pink);font-size:10px;padding:1px 5px;border-radius:3px;margin-left:4px;font-weight:400}
+.slack-text{font-size:13px;color:var(--muted);margin-top:2px;line-height:1.5}
+.slack-text code{background:#f0f0f6;padding:1px 4px;border-radius:3px;font-size:12px;color:var(--text)}
+.slack-attach{margin-top:6px;border-left:3px solid var(--pink);padding:4px 10px;background:#fafafa;border-radius:0 4px 4px 0;font-size:12px;color:var(--muted);opacity:0;animation:slackFade 8s 1.5s ease-in-out infinite}
+@keyframes slackFade{0%,8%{opacity:0;transform:translateY(6px)}16%,80%{opacity:1;transform:translateY(0)}88%,100%{opacity:0}}
+
+/* Ask Pulse typing */
+.pulse-chat{background:#fff;border-radius:8px;border:1px solid #e0e0e0;padding:12px}
+.pulse-query{font-size:13px;color:var(--text);padding:8px 12px;background:#f0f0f6;border-radius:8px;overflow:hidden;white-space:nowrap;width:0;animation:pulseType 7s steps(40,end) infinite;border-right:2px solid var(--pink)}
+.pulse-response{margin-top:10px;font-size:13px;color:var(--muted);line-height:1.5;opacity:0;animation:pulseReply 7s ease-in-out infinite}
+.pulse-response strong{color:var(--pink)}
+@keyframes pulseType{0%,5%{width:0;opacity:1}30%,85%{width:100%;opacity:1;border-right-color:var(--pink)}90%,100%{width:100%;opacity:0;border-right-color:transparent}}
+@keyframes pulseReply{0%,30%{opacity:0;transform:translateY(6px)}40%,80%{opacity:1;transform:translateY(0)}90%,100%{opacity:0}}
+</style>
+</head>
+<body>
+
+<div id="progress"></div>
+
+<canvas id="bg-canvas"></canvas>
+
+<div id="deck">
+
+<!-- ========== SLIDE 1: TITLE ========== -->
+<div class="slide active" data-slide="0">
+<div class="slide-inner" style="text-align:center">
+  <div class="fade-up" style="margin-bottom:8px">
+    <span style="font-size:clamp(48px,8vw,100px);font-weight:700;letter-spacing:-2px" class="gradient-text">
+      <span class="infinity">∞</span> Wiom Pulse
+    </span>
+  </div>
+  <div class="fade-up-d1">
+    <h2 style="color:var(--muted);font-weight:400;font-size:clamp(18px,2.5vw,30px)">Release Intelligence Platform</h2>
+  </div>
+  <div class="fade-up-d2">
+    <p class="tagline" style="font-size:clamp(15px,1.6vw,22px);max-width:700px;margin:20px auto 0">"Everyone informed. Every release measured. Every sprint smarter."</p>
+  </div>
+  <div class="fade-up-d3 brand-bar" style="justify-content:center;margin-top:48px">
+    <span class="logo-inf infinity">∞</span>
+    <span>Wiom — More than dreams, internet</span>
+    <span style="margin-left:12px;color:var(--yellow-text)">Fulfilling 500 Mn Dreams</span>
+  </div>
+  <div class="fade-up-d4" style="margin-top:16px;font-size:13px;color:var(--muted)">Powered by Claude AI</div>
+</div>
+</div>
+
+<!-- ========== SLIDE 2: THE PROBLEM ========== -->
+<div class="slide" data-slide="1">
+<div class="slide-inner">
+  <div class="fade-up">
+    <span class="phase-badge pb-1">The Problem</span>
+    <h2>"Keeping everyone informed of what is going live<br>and what was the impact"</h2>
+  </div>
+  <div class="chaos-grid fade-up-d1">
+    <div class="chaos-node stake">Product</div>
+    <div class="chaos-node pod">Backend Pod</div>
+    <div class="chaos-node jira">Jira Board</div>
+    <div class="chaos-node stake">CX Team</div>
+    <div class="chaos-node ct">CleverTap</div>
+    <div class="chaos-node pod">Frontend Pod</div>
+    <div class="chaos-node stake">Marketing</div>
+    <div class="chaos-node meta">Metabase</div>
+    <div class="chaos-node stake">Finance</div>
+    <div class="chaos-node pod">Mobile Pod</div>
+    <div class="chaos-node stake">Leadership</div>
+    <div class="chaos-node stake">Field Ops</div>
+    <div class="chaos-node stake">Growth</div>
+    <div class="chaos-node jira">Sprint Board</div>
+    <div class="chaos-node ct">Campaigns</div>
+    <div class="chaos-node stake">QA</div>
+  </div>
+  <div class="fade-up-d2" style="display:flex;flex-direction:column;gap:6px;max-width:500px;margin:0 auto">
+    <div class="disconnect"><span class="x-mark">✕</span> 12 functions <span class="line"></span> No single source of truth</div>
+    <div class="disconnect"><span class="x-mark">✕</span> 4+ channels <span class="line"></span> Fragmented updates</div>
+    <div class="disconnect"><span class="x-mark">✕</span> Multiple pods <span class="line"></span> Disconnected data</div>
+  </div>
+</div>
+</div>
+
+<!-- ========== SLIDE 3: WHY THIS PROBLEM EXISTS ========== -->
+<div class="slide" data-slide="2">
+<div class="slide-inner">
+  <div class="fade-up">
+    <span class="phase-badge pb-1">Root Causes</span>
+    <h2>Why This Problem Exists</h2>
+  </div>
+  <div class="grid-2 fade-up-d1" style="margin-top:24px;gap:20px">
+    <div class="card">
+      <h3 class="accent">12 Functions, 12 Contexts</h3>
+      <p>Product, Engineering, CX, Marketing, Finance, Growth, Field Ops, Leadership, Legal, QA, Design, Data — each cares about different things.</p>
+    </div>
+    <div class="card">
+      <h3 class="accent">Multiple Channels, Zero Sync</h3>
+      <p>Updates live in Slack threads, email chains, standup notes, and verbal updates. Nothing is centralized or searchable.</p>
+    </div>
+    <div class="card">
+      <h3 class="accent">Disconnected Data Sources</h3>
+      <p>Jira tracks work. Metabase tracks metrics. CleverTap tracks users. <strong>None of them talk to each other.</strong></p>
+      <div style="display:flex;align-items:center;gap:8px;margin-top:10px;font-size:13px">
+        <span style="color:#e84aad">Jira</span>
+        <span style="color:#D9008D">✕</span>
+        <span style="color:var(--yellow-text)">Metabase</span>
+        <span style="color:#D9008D">✕</span>
+        <span style="color:var(--yellow-text)">CleverTap</span>
+      </div>
+    </div>
+    <div class="card">
+      <h3 class="accent">No Personalized View</h3>
+      <p>No system gives Finance what Finance needs, or CX what CX needs. Everyone gets the same raw dump — or nothing at all.</p>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ========== SLIDE 4: WHAT GOOD LOOKS LIKE ========== -->
+<div class="slide" data-slide="3">
+<div class="slide-inner">
+  <div class="fade-up">
+    <span class="phase-badge pb-3">The Vision</span>
+    <h2>What Good Looks Like</h2>
+  </div>
+  <div class="grid-2 fade-up-d1" style="margin-top:24px;gap:20px">
+    <div class="card" style="border-color:rgba(31,173,78,0.3)">
+      <h3 style="color:var(--green)">Everyone aware of what's coming</h3>
+      <p>Every function knows what's shipping, when, and how it affects them — before it goes live.</p>
+    </div>
+    <div class="card" style="border-color:rgba(31,173,78,0.3)">
+      <h3 style="color:var(--green)">Impact = Visible</h3>
+      <p>Everything shipped + impact created is measured, attributed, and communicated automatically.</p>
+    </div>
+    <div class="card" style="border-color:rgba(31,173,78,0.3)">
+      <h3 style="color:var(--green)">Personalized to each function</h3>
+      <p>12 functions get 12 different stories — each in the language and metrics they care about.</p>
+    </div>
+    <div class="card" style="border-color:rgba(31,173,78,0.3)">
+      <h3 style="color:var(--green)">Auto-prioritization for next sprint</h3>
+      <p>The system learns what worked, what didn't, and tells you what to build next.</p>
+    </div>
+  </div>
+  <div class="flow-row fade-up-d2" style="margin-top:28px">
+    <div class="flow-box" style="border-color:rgba(31,173,78,0.4);color:var(--green)">Shipped</div>
+    <span class="flow-arrow" style="color:var(--green)">→</span>
+    <div class="flow-box" style="border-color:rgba(31,173,78,0.4);color:var(--green)">Measured</div>
+    <span class="flow-arrow" style="color:var(--green)">→</span>
+    <div class="flow-box" style="border-color:rgba(31,173,78,0.4);color:var(--green)">Understood</div>
+    <span class="flow-arrow" style="color:var(--green)">→</span>
+    <div class="flow-box" style="border-color:rgba(31,173,78,0.4);color:var(--green)">Acted On</div>
+  </div>
+</div>
+</div>
+
+<!-- ========== SLIDE 5: INTRODUCING WIOM PULSE ========== -->
+<div class="slide" data-slide="4">
+<div class="slide-inner" style="text-align:center">
+  <div class="fade-up">
+    <span class="phase-badge pb-1">Introducing</span>
+    <h1><span class="infinity">∞</span> <span class="gradient-text">Wiom Pulse</span></h1>
+    <p style="font-size:clamp(16px,1.6vw,22px);color:var(--text);margin:12px auto;max-width:800px">
+      AI-powered Release Intelligence Platform — <span class="accent-y">Powered by Claude</span>
+    </p>
+  </div>
+  <div class="fade-up-d1" style="margin:20px auto;max-width:700px">
+    <p style="font-size:clamp(15px,1.4vw,19px);font-style:italic;color:var(--muted)">
+      "One system ingests everything. Twelve functions get twelve different stories."
+    </p>
+  </div>
+  <div class="pipeline fade-up-d2">
+    <div class="pipe-stage pipe-1">Pre-Release<br><small style="font-weight:400;font-size:11px">Are we ready?</small></div>
+    <div class="pipe-stage pipe-2">During Release<br><small style="font-weight:400;font-size:11px">Is it working?</small></div>
+    <div class="pipe-stage pipe-3">Post-Release<br><small style="font-weight:400;font-size:11px">What happened?</small></div>
+    <div class="pipe-stage pipe-4">Learning Loop<br><small style="font-weight:400;font-size:11px">What's next?</small></div>
+  </div>
+  <div class="fade-up-d3" style="margin-top:24px">
+    <p style="font-size:14px;color:var(--muted)">16 Modules &bull; 4 Phases &bull; 12 Personalized Narratives &bull; 5 Channels</p>
+  </div>
+</div>
+</div>
+
+<!-- ========== SLIDE 6: PHASE 1 — PRE-RELEASE ========== -->
+<div class="slide" data-slide="5">
+<div class="slide-inner">
+  <div class="fade-up">
+    <span class="phase-badge pb-1">Phase 1</span>
+    <h2>Pre-Release <span style="color:var(--muted);font-weight:400">— "What's coming and are we ready?"</span></h2>
+  </div>
+  <div class="scroll-area">
+  <div class="grid-3 fade-up-d1" style="margin-top:16px">
+    <div class="card">
+      <h3><span class="accent">M1</span> Release Radar</h3>
+      <p>Upcoming releases by pod and sprint. Everyone sees what's shipping.</p>
+      <div class="sample"><span class="label">Sprint 24:</span> <span class="val">Auth Pod — OTP Revamp (Mar 20), Payments — UPI Autopay (Mar 22)</span></div>
+    </div>
+    <div class="card">
+      <h3><span class="accent">M2</span> Cross-Functional Dependency Radar</h3>
+      <p>Flags missing tickets, assigns priority, prevents last-minute scrambles.</p>
+      <div class="sample"><span class="label">Alert:</span> <span class="val">UPI Autopay missing CX training ticket → Priority: HIGH</span></div>
+    </div>
+    <div class="card">
+      <h3><span class="accent">M3</span> Stakeholder Readiness Check</h3>
+      <p>Auto-generated checklist per function. No one is caught off-guard.</p>
+      <div class="sample"><span class="label">CX:</span> <span class="val">☑ FAQ updated ☐ Script ready ☐ Escalation path set</span></div>
+    </div>
+    <div class="card">
+      <h3><span class="accent">M4</span> Release Risk Score</h3>
+      <p>Auto risk scoring: users impacted, revenue surface, rollback complexity.</p>
+      <div class="sample"><span class="label">UPI Autopay:</span> <span class="val">Risk: 7.2/10 — 40K users, ₹12L rev surface, complex rollback</span></div>
+    </div>
+    <div class="card">
+      <h3><span class="accent">M5</span> Pre-Release Simulation</h3>
+      <p>Predicts expected metric movement from historical data.</p>
+      <div class="sample"><span class="label">Prediction:</span> <span class="val">OTP Revamp → Login success +8-12%, Support tickets -15%</span></div>
+    </div>
+  </div>
+  </div>
+</div>
+</div>
+
+<!-- ========== SLIDE 7: PHASE 2 — DURING RELEASE ========== -->
+<div class="slide" data-slide="6">
+<div class="slide-inner">
+  <div class="fade-up">
+    <span class="phase-badge pb-2">Phase 2</span>
+    <h2>During Release <span style="color:var(--muted);font-weight:400">— "Is it working right now?"</span></h2>
+  </div>
+  <div class="grid-2 fade-up-d1" style="margin-top:24px;gap:24px">
+    <div class="card" style="border-color:rgba(224,48,48,0.3)">
+      <h3><span style="color:var(--red)">M6</span> Live Rollout Monitoring & Auto-Alerts</h3>
+      <p>Real-time metric monitoring against thresholds. Auto-alerts when something crosses the line.</p>
+      <div class="sample" style="margin-top:12px;border-color:rgba(224,48,48,0.2)">
+        <div><span class="label" style="color:var(--red)">ALERT — 14:32 IST</span></div>
+        <div><span class="val">OTP Revamp rollout: Login failure rate spiked to 8.3% (threshold: 5%)</span></div>
+        <div><span class="val">Cohort: New users, Jio network, Tier 2 cities</span></div>
+        <div><span class="val">Recommendation: HOLD rollout. Investigate Jio SMS gateway latency.</span></div>
+      </div>
+    </div>
+    <div class="card" style="border-color:rgba(229,161,0,0.3)">
+      <h3><span style="color:var(--amber)">M7</span> Gradual Rollout Intelligence</h3>
+      <p>Per-cohort performance tracking with expand/hold/rollback recommendations.</p>
+      <div class="sample" style="margin-top:12px">
+        <div><span class="label">Cohort Performance:</span></div>
+        <div><span class="val">5% rollout → Login success: 94.2% ✅</span></div>
+        <div><span class="val">20% rollout → Login success: 93.8% ✅</span></div>
+        <div><span class="val">50% rollout → Login success: 91.1% ⚠️</span></div>
+        <div style="margin-top:6px"><span class="label">Recommendation:</span> <span class="val">HOLD at 50%. Degradation in Tier 3. Investigate before expanding.</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="fade-up-d2" style="text-align:center;margin-top:24px">
+    <p style="color:var(--pink);font-weight:700;font-size:16px">Real-time. Automated. No one needs to ask "is it working?"</p>
+  </div>
+</div>
+</div>
+
+<!-- ========== SLIDE 8: PHASE 3 — POST-RELEASE ========== -->
+<div class="slide" data-slide="7">
+<div class="slide-inner">
+  <div class="fade-up">
+    <span class="phase-badge pb-3">Phase 3</span>
+    <h2>Post-Release <span style="color:var(--muted);font-weight:400">— "What worked, what didn't, and why?"</span></h2>
+  </div>
+  <div class="scroll-area">
+  <div class="grid-3 fade-up-d1" style="margin-top:16px">
+    <div class="card" style="border-color:rgba(31,173,78,0.3)">
+      <h3><span style="color:var(--green)">M8</span> What's Working</h3>
+      <p>Metrics improved, breakdown by persona, geography, contributing factors.</p>
+      <div class="sample"><span class="label">OTP Revamp:</span> <span class="val">Login success +9.4% overall. Highest lift: Tier 2 (+14%)</span></div>
+    </div>
+    <div class="card" style="border-color:rgba(224,48,48,0.3)">
+      <h3><span style="color:var(--red)">M9</span> What's Not Working</h3>
+      <p>Metrics declined, possible reasons with contribution %, persona/geo impacted.</p>
+      <div class="sample"><span class="label">UPI Autopay:</span> <span class="val">Conversion -3.2%. Root: UI confusion (60%), timeout (40%)</span></div>
+    </div>
+    <div class="card" style="border-color:rgba(229,161,0,0.3)">
+      <h3><span style="color:var(--amber)">M10</span> Feature Adoption Funnel</h3>
+      <p>Exposed → Discovered → Engaged → Converted. Diagnoses where users drop off.</p>
+      <div class="sample"><span class="val">Exposed: 40K → Discovered: 28K → Engaged: 12K → <span class="label">Converted: 3K</span> (Bottleneck: Engaged→Converted)</span></div>
+    </div>
+    <div class="card" style="border-color:rgba(224,48,48,0.3)">
+      <h3><span style="color:var(--red)">M11</span> Cannibalization Detection</h3>
+      <p>Detects when a new feature hurts existing metrics elsewhere.</p>
+      <div class="sample"><span class="label">Alert:</span> <span class="val">UPI Autopay launch correlated with -5% in manual pay completions</span></div>
+    </div>
+    <div class="card" style="border-color:rgba(229,161,0,0.3)">
+      <h3><span style="color:var(--amber)">M12</span> External Factor Isolation</h3>
+      <p>IPL, holidays, outages calendar. Separates real impact from noise.</p>
+      <div class="sample"><span class="val">DAU spike on Mar 18 → <span class="label">IPL match day (external)</span>, not feature-driven</span></div>
+    </div>
+    <div class="card" style="border-color:rgba(31,173,78,0.3)">
+      <h3><span style="color:var(--green)">M13</span> User Feedback Correlation</h3>
+      <p>App reviews, support tickets, NPS verbatims linked to releases.</p>
+      <div class="sample"><span class="label">NPS verbatim:</span> <span class="val">"New OTP is so much faster" → linked to OTP Revamp (Sprint 24)</span></div>
+    </div>
+  </div>
+  </div>
+</div>
+</div>
+
+<!-- ========== SLIDE 9: PHASE 4 — LEARNING LOOP ========== -->
+<div class="slide" data-slide="8">
+<div class="slide-inner">
+  <div class="fade-up">
+    <span class="phase-badge pb-4">Phase 4</span>
+    <h2>Learning Loop <span style="color:var(--muted);font-weight:400">— "What should we do next?"</span></h2>
+  </div>
+  <div class="grid-3 fade-up-d1" style="margin-top:24px;gap:24px">
+    <div class="card" style="border-color:rgba(217,0,141,0.3)">
+      <h3><span style="color:#D9008D">M14</span> Auto-Prioritization Engine</h3>
+      <p>Data-driven sprint priorities. No more gut-feel roadmaps.</p>
+      <div class="sample" style="margin-top:12px">
+        <div><span class="label">Impact Score Formula:</span></div>
+        <div><span class="val">(Metric gap) × (Users affected) × (Strategic weight)</span></div>
+        <div style="margin-top:8px"><span class="label">Top Pick:</span> <span class="val">Fix UPI Autopay UI → Score: 8.7 → Est. +₹4.2L/mo</span></div>
+      </div>
+    </div>
+    <div class="card" style="border-color:rgba(217,0,141,0.3)">
+      <h3><span style="color:#D9008D">M15</span> Release Knowledge Base</h3>
+      <p>Permanent org memory. Every release, every outcome, every lesson — searchable forever.</p>
+      <div class="sample" style="margin-top:12px">
+        <div><span class="label">Query:</span> <span class="val">"What happened last time we changed the payment flow?"</span></div>
+        <div><span class="label">Answer:</span> <span class="val">Sprint 18: Conversion dipped 4.1% for 3 days, recovered after CX script update.</span></div>
+      </div>
+    </div>
+    <div class="card" style="border-color:rgba(217,0,141,0.3)">
+      <h3><span style="color:#D9008D">M16</span> Cost-Impact Ratio & Velocity</h3>
+      <p>Story points vs metric impact. Cycle time trends. Know which pods deliver the most value.</p>
+      <div class="sample" style="margin-top:12px">
+        <div><span class="label">Auth Pod:</span> <span class="val">13 story pts → +9.4% login success (0.72 impact/pt) ✅</span></div>
+        <div><span class="label">Payments Pod:</span> <span class="val">21 story pts → -3.2% conversion (negative ROI) ⚠️</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="fade-up-d2" style="text-align:center;margin-top:28px">
+    <p style="color:#D9008D;font-weight:700;font-size:16px">Every sprint gets smarter than the last.</p>
+  </div>
+</div>
+</div>
+
+<!-- ========== SLIDE 10: DISTRIBUTION ========== -->
+<div class="slide" data-slide="9">
+<div class="slide-inner">
+  <div class="fade-up">
+    <span class="phase-badge pb-1">Distribution</span>
+    <h2>Impossible to Miss</h2>
+    <p style="color:var(--text);margin-bottom:8px;font-size:17px">Everyone unlocks their phone. Everyone opens their laptop. <strong>Pulse is already there.</strong></p>
+    <p style="color:var(--muted);margin-bottom:16px;font-size:14px">Tap or click the widget → full dashboard opens. + WhatsApp, Email, Slack, Ask Pulse.</p>
+  </div>
+  <div class="scroll-area">
+
+  <!-- HERO: Widget on Phone + Desktop with click-to-dashboard -->
+  <div class="fade-up-d1" style="display:flex;align-items:stretch;gap:20px;margin-bottom:20px">
+
+    <!-- LEFT: Phone Widget → Dashboard animation -->
+    <div class="device-demo" style="flex:1;background:#f8f8fc;border:2px solid var(--pink);border-radius:16px;padding:20px;box-shadow:0 4px 20px rgba(217,0,141,0.1);text-align:center;position:relative;overflow:hidden">
+      <h3 style="font-size:16px;color:var(--pink);margin-bottom:12px">📱 Phone Widget</h3>
+      <!-- Phone with widget -->
+      <div class="widget-phone" id="phoneWidget" style="margin:0 auto;cursor:pointer" onclick="this.style.display='none';document.getElementById('phoneDash').style.display='flex'">
+        <div class="widget-notch"></div>
+        <div class="widget-time">9:41</div>
+        <div class="widget-card">
+          <div class="widget-header"><span class="widget-inf">∞</span> Wiom Pulse</div>
+          <div class="widget-stats">
+            <div class="widget-stat"><span class="widget-num widget-anim-1">7</span><span class="widget-lbl">Shipped</span></div>
+            <div class="widget-divider"></div>
+            <div class="widget-stat"><span class="widget-num widget-anim-2" style="color:var(--green)">+4.2%</span><span class="widget-lbl">Impact</span></div>
+            <div class="widget-divider"></div>
+            <div class="widget-stat"><span class="widget-num widget-anim-3" style="color:var(--red)">1</span><span class="widget-lbl">Alert</span></div>
+          </div>
+          <div class="widget-footer">Tap to open dashboard →</div>
+        </div>
+        <div class="widget-icons"><div class="widget-icon-dot"></div><div class="widget-icon-dot"></div><div class="widget-icon-dot"></div><div class="widget-icon-dot"></div></div>
+      </div>
+      <!-- Phone showing dashboard (hidden initially) -->
+      <div class="widget-phone" id="phoneDash" style="margin:0 auto;display:none;cursor:pointer;animation:dashOpen .5s ease" onclick="this.style.display='none';document.getElementById('phoneWidget').style.display='flex'">
+        <div class="widget-notch"></div>
+        <div style="background:var(--pink);padding:6px 10px;border-radius:8px 8px 0 0;display:flex;align-items:center;gap:4px">
+          <span style="font-size:10px;color:#fff;font-weight:700">∞ Wiom Pulse Dashboard</span>
+        </div>
+        <div style="background:#fff;flex:1;border-radius:0 0 8px 8px;padding:8px;font-size:8px;overflow:hidden">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:6px">
+            <div style="background:#f0f0f6;border-radius:4px;padding:4px;text-align:center"><span style="font-weight:700;color:var(--pink);font-size:12px">7</span><br>Shipped</div>
+            <div style="background:#f0f0f6;border-radius:4px;padding:4px;text-align:center"><span style="font-weight:700;color:var(--green);font-size:12px">+4.2%</span><br>Impact</div>
+          </div>
+          <div style="background:#f0f0f6;border-radius:4px;padding:4px;margin-bottom:4px;border-left:2px solid var(--red)"><span style="color:var(--red);font-weight:700">Alert:</span> OTP drop-off</div>
+          <div style="background:#f0f0f6;border-radius:4px;padding:4px;margin-bottom:4px"><span style="font-weight:700">Highlights</span><br>Plan page +14%</div>
+          <div style="background:#f0f0f6;border-radius:4px;padding:4px"><span style="font-weight:700">Upcoming</span><br>4 releases queued</div>
+        </div>
+      </div>
+      <p style="font-size:11px;color:var(--muted);margin-top:8px">Click widget to see dashboard →</p>
+    </div>
+
+    <!-- CENTER: Description -->
+    <div style="flex:1.3;display:flex;flex-direction:column;justify-content:center;padding:8px 0">
+      <h3 style="font-size:20px;color:var(--pink);margin-bottom:10px">The Channel No One Can Skip</h3>
+      <p style="font-size:15px;color:var(--text);line-height:1.6;margin-bottom:10px">
+        A stakeholder might miss a Slack message or skip an email. But they <strong>will</strong> unlock their phone and open their laptop — <strong>every single day</strong>.
+      </p>
+      <p style="font-size:14px;color:var(--muted);line-height:1.6;margin-bottom:12px">
+        The Wiom Pulse widget sits right there — on the phone homescreen <em>and</em> the desktop. Glanceable, always live, personalized. One tap or click → full dashboard opens.
+      </p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <span style="background:rgba(31,173,78,0.1);color:var(--green);padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700">Always visible</span>
+        <span style="background:rgba(217,0,141,0.1);color:var(--pink);padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700">Zero effort</span>
+        <span style="background:rgba(229,161,0,0.1);color:var(--amber);padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700">Live updates</span>
+        <span style="background:rgba(217,0,141,0.1);color:var(--pink);padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700">Tap → Full Dashboard</span>
+      </div>
+    </div>
+
+    <!-- RIGHT: Desktop/Laptop Widget → Dashboard animation -->
+    <div class="device-demo" style="flex:1.4;background:#f8f8fc;border:2px solid var(--pink);border-radius:16px;padding:20px;box-shadow:0 4px 20px rgba(217,0,141,0.1);text-align:center;position:relative;overflow:hidden">
+      <h3 style="font-size:16px;color:var(--pink);margin-bottom:12px">💻 Desktop / Laptop Widget</h3>
+      <!-- Desktop with widget -->
+      <div class="desktop-frame" id="desktopWidget" style="cursor:pointer" onclick="this.style.display='none';document.getElementById('desktopDash').style.display='flex'">
+        <div class="desktop-bar"><span class="desktop-dot" style="background:#ff5f56"></span><span class="desktop-dot" style="background:#ffbd2e"></span><span class="desktop-dot" style="background:#27c93f"></span><span style="flex:1;text-align:center;font-size:9px;color:var(--muted)">Desktop</span></div>
+        <div class="desktop-screen">
+          <div class="desktop-widget-card">
+            <div style="display:flex;align-items:center;gap:4px;margin-bottom:6px"><span style="font-size:12px;background:linear-gradient(135deg,var(--pink),var(--yellow));-webkit-background-clip:text;-webkit-text-fill-color:transparent">∞</span><span style="font-size:10px;font-weight:700;color:var(--pink)">Wiom Pulse</span></div>
+            <div style="display:flex;gap:10px;margin-bottom:6px">
+              <div style="text-align:center"><span style="font-size:16px;font-weight:700;color:var(--pink)">7</span><br><span style="font-size:8px;color:var(--muted)">Shipped</span></div>
+              <div style="width:1px;background:#e0e0e8"></div>
+              <div style="text-align:center"><span style="font-size:16px;font-weight:700;color:var(--green)">+4.2%</span><br><span style="font-size:8px;color:var(--muted)">Impact</span></div>
+              <div style="width:1px;background:#e0e0e8"></div>
+              <div style="text-align:center"><span style="font-size:16px;font-weight:700;color:var(--red)">1</span><br><span style="font-size:8px;color:var(--muted)">Alert</span></div>
+            </div>
+            <div style="font-size:8px;color:var(--muted);border-top:1px solid #f0f0f4;padding-top:4px">Click to open full dashboard →</div>
+          </div>
+        </div>
+      </div>
+      <!-- Desktop showing full dashboard (hidden initially) -->
+      <div class="desktop-frame" id="desktopDash" style="display:none;cursor:pointer;animation:dashOpen .5s ease" onclick="this.style.display='none';document.getElementById('desktopWidget').style.display='flex'">
+        <div class="desktop-bar"><span class="desktop-dot" style="background:#ff5f56"></span><span class="desktop-dot" style="background:#ffbd2e"></span><span class="desktop-dot" style="background:#27c93f"></span><span style="flex:1;text-align:center;font-size:9px;color:var(--muted)">Wiom Pulse — Dashboard</span></div>
+        <div class="desktop-screen" style="padding:6px;display:flex;gap:4px">
+          <!-- Mini sidebar -->
+          <div style="width:36px;background:#f0f0f6;border-radius:4px;padding:4px;display:flex;flex-direction:column;gap:3px;flex-shrink:0">
+            <div style="width:8px;height:8px;background:var(--pink);border-radius:2px;margin:0 auto"></div>
+            <div style="width:8px;height:8px;background:#d0d0d8;border-radius:2px;margin:0 auto"></div>
+            <div style="width:8px;height:8px;background:#d0d0d8;border-radius:2px;margin:0 auto"></div>
+            <div style="width:8px;height:8px;background:#d0d0d8;border-radius:2px;margin:0 auto"></div>
+          </div>
+          <!-- Mini content -->
+          <div style="flex:1;display:flex;flex-direction:column;gap:4px">
+            <div style="display:flex;gap:3px">
+              <div style="flex:1;background:#f0f0f6;border-radius:3px;padding:3px;text-align:center;border-top:2px solid var(--pink)"><span style="font-size:10px;font-weight:700;color:var(--pink)">7</span><br><span style="font-size:6px">Shipped</span></div>
+              <div style="flex:1;background:#f0f0f6;border-radius:3px;padding:3px;text-align:center;border-top:2px solid var(--green)"><span style="font-size:10px;font-weight:700;color:var(--green)">+4.2%</span><br><span style="font-size:6px">Impact</span></div>
+              <div style="flex:1;background:#f0f0f6;border-radius:3px;padding:3px;text-align:center;border-top:2px solid var(--red)"><span style="font-size:10px;font-weight:700;color:var(--red)">1</span><br><span style="font-size:6px">Alert</span></div>
+            </div>
+            <div style="background:#f0f0f6;border-radius:3px;padding:3px;border-left:2px solid var(--red);font-size:7px"><span style="color:var(--red);font-weight:700">Alert:</span> OTP drop-off -3%</div>
+            <div style="display:flex;gap:3px;flex:1">
+              <div style="flex:1;background:#f0f0f6;border-radius:3px;padding:3px;font-size:7px"><span style="font-weight:700">Highlights</span><br>Plan +14%<br>OTP +9.4%</div>
+              <div style="flex:1;background:#f0f0f6;border-radius:3px;padding:3px;font-size:7px"><span style="font-weight:700">Upcoming</span><br>Mar 19: OTP<br>Mar 21: Gateway</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p style="font-size:11px;color:var(--muted);margin-top:8px">Click widget to see dashboard →</p>
+    </div>
+
+  </div>
+
+  <!-- Other channels grid -->
+  <div class="dist-grid fade-up-d2">
+    <!-- WhatsApp mockup -->
+    <div class="dist-card">
+      <div class="dist-label"><span style="font-size:20px">💬</span> <span style="color:var(--yellow-text)">WhatsApp</span> <span style="font-size:11px;color:var(--muted);font-weight:400;margin-left:4px">Mon 9 AM + alerts</span></div>
+      <div class="dist-mockup">
+        <div class="wa-phone">
+          <div class="wa-typing"><span></span><span></span><span></span></div>
+          <div class="wa-bubble">Wiom Pulse: OTP Revamp is LIVE! Login success +9.4%. Highest lift in Tier 2 cities (+14%).</div>
+          <div class="wa-bubble">Got it, thanks! What about UPI Autopay?</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Email mockup -->
+    <div class="dist-card">
+      <div class="dist-label"><span style="font-size:20px">📧</span> <span style="color:#e84aad">Email</span> <span style="font-size:11px;color:var(--muted);font-weight:400;margin-left:4px">Weekly digest</span></div>
+      <div class="dist-mockup">
+        <div class="email-inbox">
+          <div class="email-header">Inbox</div>
+          <div class="email-row"><span class="email-dot"></span><span class="email-subj">Wiom Pulse Weekly — Sprint 24</span><span class="email-preview">3 releases shipped...</span></div>
+          <div class="email-row"><span class="email-dot"></span><span class="email-subj">ALERT: UPI Autopay Hold</span><span class="email-preview">Conversion dip detected</span></div>
+          <div class="email-row"><span class="email-dot"></span><span class="email-subj">Sprint 25 Pre-Release Radar</span><span class="email-preview">4 upcoming releases...</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slack mockup -->
+    <div class="dist-card">
+      <div class="dist-label"><span style="font-size:20px">⚡</span> <span style="color:var(--yellow-text)">Slack</span> <span style="font-size:11px;color:var(--muted);font-weight:400;margin-left:4px">#wiom-pulse</span></div>
+      <div class="dist-mockup">
+        <div class="slack-msg-area">
+          <div class="slack-msg"><div class="slack-avatar">P</div><div class="slack-body"><div class="slack-name">Wiom Pulse <span class="slack-badge">BOT</span></div><div class="slack-text"><strong style="color:var(--pink)">Sprint 24 Impact</strong><br>OTP Revamp: <code>+9.4%</code> login | UPI: On hold</div></div></div>
+          <div class="slack-attach">Auth Pod: 13 pts | 0.72 impact/pt</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Ask Pulse mockup -->
+    <div class="dist-card">
+      <div class="dist-label"><span style="font-size:20px">🤖</span> <span class="gradient-text">"Ask Pulse"</span> <span style="font-size:11px;color:var(--muted);font-weight:400;margin-left:4px">Ask anything</span></div>
+      <div class="dist-mockup">
+        <div class="pulse-chat">
+          <div class="pulse-query">What was the impact of OTP change on Tier 2?</div>
+          <div class="pulse-response"><strong>Pulse:</strong> Login success in Tier 2 improved by <strong>14.2%</strong>, highest lift in Jio users (+18.1%).</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  </div>
+</div>
+</div>
+
+<!-- ========== SLIDE 11: ARCHITECTURE ========== -->
+<div class="slide" data-slide="10">
+<div class="slide-inner">
+  <div class="fade-up">
+    <span class="phase-badge pb-1">Architecture</span>
+    <h2>How It All Connects</h2>
+  </div>
+  <div class="arch fade-up-d1">
+    <!-- Data Sources -->
+    <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:2px;margin-bottom:8px;font-weight:700">Data Sources</div>
+    <div class="arch-row">
+      <div class="arch-box arch-src">Jira</div>
+      <div class="arch-box arch-src">Metabase</div>
+      <div class="arch-box arch-src">CleverTap</div>
+      <div class="arch-box arch-src">Roadmap</div>
+      <div class="arch-box arch-src">App Reviews</div>
+    </div>
+    <div class="arch-arrow">↓</div>
+
+    <!-- Core -->
+    <div class="arch-box arch-core" style="font-size:18px"><span class="infinity" style="font-size:22px">∞</span> Claude Agent — Wiom Pulse</div>
+    <div class="arch-arrow">↓</div>
+
+    <!-- 4 Phases -->
+    <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:2px;margin-bottom:8px;font-weight:700">Processing</div>
+    <div class="arch-row">
+      <div class="arch-box arch-phase">Pre-Release<br><small>5 modules</small></div>
+      <span class="arch-arrow-h">→</span>
+      <div class="arch-box arch-phase">During Release<br><small>2 modules</small></div>
+      <span class="arch-arrow-h">→</span>
+      <div class="arch-box arch-phase">Post-Release<br><small>6 modules</small></div>
+      <span class="arch-arrow-h">→</span>
+      <div class="arch-box arch-phase">Learning Loop<br><small>3 modules</small></div>
+    </div>
+    <div class="arch-arrow">↓</div>
+
+    <!-- Personalization -->
+    <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:2px;margin-bottom:8px;font-weight:700">Personalization Layer</div>
+    <div class="arch-row">
+      <div class="arch-box arch-pers">12 Functions</div>
+      <span class="arch-arrow-h">→</span>
+      <div class="arch-box arch-pers">Role-Based Narratives</div>
+      <span class="arch-arrow-h">→</span>
+      <div class="arch-box arch-pers">Priority Filtering</div>
+    </div>
+    <div class="arch-arrow">↓</div>
+
+    <!-- Output -->
+    <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:2px;margin-bottom:8px;font-weight:700">Distribution</div>
+    <div class="arch-row">
+      <div class="arch-box arch-out" style="border-color:var(--pink);color:var(--pink);font-weight:700">📱 Widget</div>
+      <div class="arch-box arch-out">WhatsApp</div>
+      <div class="arch-box arch-out">Email</div>
+      <div class="arch-box arch-out">Slack</div>
+      <div class="arch-box arch-out">Dashboard</div>
+      <div class="arch-box arch-out">Ask Pulse</div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ========== SLIDE 12: WHY PULSE WINS ========== -->
+<div class="slide" data-slide="11">
+<div class="slide-inner">
+  <div class="fade-up">
+    <span class="phase-badge pb-1">Why Pulse Wins</span>
+    <h2>Not Just Better — <span class="gradient-text">Different</span></h2>
+  </div>
+  <div class="fade-up-d1">
+  <table class="compare-table">
+    <thead>
+      <tr><th style="width:45%">What others propose</th><th style="width:10%;text-align:center"></th><th style="width:45%">What Pulse does</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="old">Slack bot that posts updates</td><td style="text-align:center">→</td><td class="new">16-module intelligence platform</td></tr>
+      <tr><td class="old">One-size-fits-all notifications</td><td style="text-align:center">→</td><td class="new">12 personalized narratives per function</td></tr>
+      <tr><td class="old">"Feature X shipped"</td><td style="text-align:center">→</td><td class="new">Full impact story with root causes</td></tr>
+      <tr><td class="old">Manual updates by PMs</td><td style="text-align:center">→</td><td class="new">Fully automated, zero human effort</td></tr>
+      <tr><td class="old">Backward-looking reports</td><td style="text-align:center">→</td><td class="new">Full lifecycle: pre → during → post → learn</td></tr>
+      <tr><td class="old">Dashboard nobody checks</td><td style="text-align:center">→</td><td class="new">Multi-channel push — impossible to miss</td></tr>
+      <tr><td class="old">Static weekly reports</td><td style="text-align:center">→</td><td class="new">Conversational AI — "Ask Pulse" anything</td></tr>
+    </tbody>
+  </table>
+  </div>
+</div>
+</div>
+
+<!-- ========== SLIDE 13: CTA ========== -->
+<div class="slide" data-slide="12">
+<div class="slide-inner" style="text-align:center">
+  <div class="fade-up">
+    <span style="font-size:clamp(56px,9vw,110px)" class="infinity">∞</span>
+  </div>
+  <div class="fade-up-d1">
+    <h1><span class="gradient-text">Wiom Pulse</span></h1>
+  </div>
+  <div class="fade-up-d2">
+    <p class="cta-big">
+      An AI-powered release intelligence platform that tells every stakeholder
+      <span class="accent">what shipped</span>, <span style="color:var(--green)">whether it worked</span>,
+      <span style="color:var(--amber)">why</span>, and <span style="color:var(--pink)">what to do next</span>
+      — automatically, personally, and across every channel.
+    </p>
+  </div>
+  <div class="fade-up-d3">
+    <div class="cta-build">Let's build this.</div>
+  </div>
+  <div class="fade-up-d4 brand-bar" style="justify-content:center;margin-top:48px">
+    <span class="logo-inf infinity">∞</span>
+    <span>Wiom — More than dreams, internet</span>
+    <span style="margin-left:12px;color:var(--yellow-text)">Fulfilling 500 Mn Dreams</span>
+  </div>
+</div>
+</div>
+
+</div><!-- end #deck -->
+
+<!-- NAV DOTS -->
+<div id="nav"></div>
+<div id="slide-num"></div>
+
+<script>
+(function(){
+  // ===== SLIDES =====
+  const slides = document.querySelectorAll('.slide');
+  const total = slides.length;
+  let current = 0;
+
+  // Build nav dots
+  const nav = document.getElementById('nav');
+  slides.forEach((_,i) => {
+    const d = document.createElement('button');
+    d.className = 'dot' + (i===0?' active':'');
+    d.addEventListener('click', () => goTo(i));
+    nav.appendChild(d);
+  });
+  const dots = document.querySelectorAll('.dot');
+  const slideNum = document.getElementById('slide-num');
+  const progress = document.getElementById('progress');
+
+  function updateUI(){
+    dots.forEach((d,i) => d.classList.toggle('active', i===current));
+    slideNum.textContent = (current+1) + ' / ' + total;
+    progress.style.width = ((current+1)/total*100) + '%';
+  }
+
+  function goTo(idx){
+    if(idx<0||idx>=total||idx===current) return;
+    const dir = idx > current ? 1 : -1;
+    slides[current].classList.remove('active');
+    if(dir===1) slides[current].classList.add('left');
+    else slides[current].classList.remove('left');
+    current = idx;
+    slides[current].classList.remove('left');
+    slides[current].classList.add('active');
+    updateUI();
+  }
+
+  document.addEventListener('keydown', e => {
+    if(e.key==='ArrowRight'||e.key==='ArrowDown') goTo(current+1);
+    if(e.key==='ArrowLeft'||e.key==='ArrowUp') goTo(current-1);
+  });
+
+  // Touch support
+  let tx=0;
+  document.addEventListener('touchstart', e => { tx=e.touches[0].clientX; });
+  document.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - tx;
+    if(Math.abs(dx)>50){ dx<0 ? goTo(current+1) : goTo(current-1); }
+  });
+
+  updateUI();
+
+  // ===== BACKGROUND PARTICLES =====
+  const canvas = document.getElementById('bg-canvas');
+  const ctx = canvas.getContext('2d');
+  let W, H;
+  function resize(){ W=canvas.width=window.innerWidth; H=canvas.height=window.innerHeight; }
+  resize();
+  window.addEventListener('resize', resize);
+
+  class Particle {
+    constructor(){this.reset()}
+    reset(){
+      this.x=Math.random()*W;
+      this.y=Math.random()*H;
+      this.r=Math.random()*1.8+0.3;
+      this.vx=(Math.random()-0.5)*0.3;
+      this.vy=(Math.random()-0.5)*0.3;
+      this.alpha=Math.random()*0.08+0.02;
+      this.color=Math.random()>0.5?'217,0,141':'254,216,0';
+    }
+    update(){
+      this.x+=this.vx;this.y+=this.vy;
+      if(this.x<0||this.x>W)this.vx*=-1;
+      if(this.y<0||this.y>H)this.vy*=-1;
+    }
+    draw(){
+      ctx.beginPath();ctx.arc(this.x,this.y,this.r,0,Math.PI*2);
+      ctx.fillStyle='rgba('+this.color+','+this.alpha+')';ctx.fill();
+    }
+  }
+
+  const particles=[];
+  const count=Math.min(60, Math.floor(W*H/15000));
+  for(let i=0;i<count;i++) particles.push(new Particle());
+
+  // Gradient blobs
+  function drawBlobs(){
+    // Pink blob
+    const g1=ctx.createRadialGradient(W*0.2,H*0.3,0,W*0.2,H*0.3,W*0.35);
+    g1.addColorStop(0,'rgba(217,0,141,0.04)');g1.addColorStop(1,'rgba(217,0,141,0)');
+    ctx.fillStyle=g1;ctx.fillRect(0,0,W,H);
+    // Yellow blob
+    const g2=ctx.createRadialGradient(W*0.8,H*0.7,0,W*0.8,H*0.7,W*0.3);
+    g2.addColorStop(0,'rgba(254,216,0,0.03)');g2.addColorStop(1,'rgba(254,216,0,0)');
+    ctx.fillStyle=g2;ctx.fillRect(0,0,W,H);
+  }
+
+  function animate(){
+    ctx.clearRect(0,0,W,H);
+    drawBlobs();
+    particles.forEach(p=>{p.update();p.draw()});
+    requestAnimationFrame(animate);
+  }
+  animate();
+})();
+</script>
+</body>
+</html>

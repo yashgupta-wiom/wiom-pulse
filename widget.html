@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wiom Pulse — Desktop Widget</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;width:100%;overflow:hidden;font-family:'Noto Sans',sans-serif;cursor:default}
+
+/* ===== LAYOUT ===== */
+.desktop{display:flex;flex-direction:column;height:100%;width:100%}
+.wallpaper{flex:1;position:relative;overflow:hidden;
+  background:linear-gradient(180deg,#0f2b4a 0%,#1e5284 20%,#4a9ed6 45%,#87c5e8 58%,#c5e3f5 68%,#4a8c3f 68.1%,#3d7a35 76%,#2d6628 86%,#1e4d1b 100%);
+}
+.taskbar{height:48px;flex-shrink:0}
+
+/* ===== SKY ELEMENTS ===== */
+.sun{position:absolute;width:70px;height:70px;border-radius:50%;
+  background:radial-gradient(circle,#fffde7 20%,#ffe082 60%,#ffb300 100%);
+  top:12%;left:62%;box-shadow:0 0 50px rgba(255,179,0,0.25),0 0 100px rgba(255,179,0,0.1)}
+.cloud{position:absolute;border-radius:50px}
+.c1{width:140px;height:22px;background:rgba(255,255,255,0.45);top:16%;left:10%;animation:drift 50s linear infinite}
+.c2{width:100px;height:18px;background:rgba(255,255,255,0.35);top:24%;left:35%;animation:drift 65s 8s linear infinite}
+.c3{width:160px;height:20px;background:rgba(255,255,255,0.4);top:10%;left:78%;animation:drift 55s 3s linear infinite}
+@keyframes drift{0%{transform:translateX(0)}100%{transform:translateX(-250px)}}
+
+/* ===== WIOM PULSE WIDGET ===== */
+.pulse-widget{
+  position:absolute;top:28px;right:28px;width:320px;
+  background:rgba(255,255,255,0.94);backdrop-filter:blur(20px);
+  border-radius:16px;overflow:hidden;
+  box-shadow:0 8px 32px rgba(0,0,0,0.15),0 1px 3px rgba(0,0,0,0.08);
+  border:1px solid rgba(255,255,255,0.7);
+  cursor:pointer;transition:all .3s ease;
+  animation:wBreathe 4s ease-in-out infinite;
+  z-index:10;
+}
+.pulse-widget:hover{
+  transform:translateY(-3px);
+  box-shadow:0 14px 44px rgba(217,0,141,0.18),0 2px 8px rgba(0,0,0,0.12);
+  border-color:rgba(217,0,141,0.3);
+}
+.pulse-widget:active{transform:scale(0.97)}
+@keyframes wBreathe{
+  0%,100%{box-shadow:0 8px 32px rgba(0,0,0,0.15),0 1px 3px rgba(0,0,0,0.08)}
+  50%{box-shadow:0 8px 40px rgba(217,0,141,0.15),0 1px 3px rgba(0,0,0,0.08)}
+}
+
+/* Widget header bar */
+.w-top{display:flex;align-items:center;padding:14px 18px 12px;border-bottom:1px solid #f0f0f4}
+.w-top-logo{font-size:20px;font-weight:700;
+  background:linear-gradient(135deg,#D9008D,#FED800);-webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  margin-right:6px;line-height:1}
+.w-top-name{font-size:15px;font-weight:700;color:#1a1a2e;white-space:nowrap}
+.w-top-live{margin-left:auto;display:flex;align-items:center;gap:5px;
+  font-size:10px;font-weight:700;color:#D9008D;
+  padding:2px 9px;border-radius:10px;background:rgba(217,0,141,0.07);white-space:nowrap}
+.w-live-dot{width:6px;height:6px;border-radius:50%;background:#D9008D;flex-shrink:0;animation:blink 1.5s ease infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+
+/* KPI grid — 2x2 */
+.w-kpis{display:grid;grid-template-columns:1fr 1fr;gap:0;padding:0}
+.w-kpi{padding:14px 16px;text-align:center;position:relative}
+.w-kpi:nth-child(1){border-right:1px solid #f0f0f4;border-bottom:1px solid #f0f0f4}
+.w-kpi:nth-child(2){border-bottom:1px solid #f0f0f4}
+.w-kpi:nth-child(3){border-right:1px solid #f0f0f4}
+.w-kpi-val{font-size:26px;font-weight:700;display:block;line-height:1.2;margin-bottom:3px}
+.w-kpi-val .frac{font-size:15px;font-weight:400;color:#8888a0}
+.w-kpi-lbl{font-size:10px;color:#8888a0;text-transform:uppercase;letter-spacing:0.4px;font-weight:600;white-space:nowrap}
+.cp{color:#D9008D}.cg{color:#1FAD4E}.cr{color:#E03030}.ca{color:#E5A100}
+
+/* Summary */
+.w-sum{padding:10px 18px;font-size:12px;color:#555570;line-height:1.5;border-top:1px solid #f0f0f4}
+.w-sum strong{color:#1a1a2e}
+
+/* CTA bar */
+.w-cta{display:flex;align-items:center;justify-content:center;gap:6px;
+  padding:11px 18px;font-size:13px;font-weight:700;color:#D9008D;
+  background:rgba(217,0,141,0.04);border-top:1px solid #f0f0f4;transition:background .2s}
+.pulse-widget:hover .w-cta{background:rgba(217,0,141,0.1)}
+.w-arrow{transition:transform .3s}
+.pulse-widget:hover .w-arrow{transform:translateX(5px)}
+
+/* ===== HINT ===== */
+.hint{position:absolute;bottom:20px;left:50%;transform:translateX(-50%);
+  font-size:13px;color:rgba(255,255,255,0.85);
+  background:rgba(0,0,0,0.35);backdrop-filter:blur(8px);
+  padding:8px 22px;border-radius:20px;white-space:nowrap;z-index:10;
+  animation:hintP 3s ease infinite}
+@keyframes hintP{0%,100%{opacity:.5}50%{opacity:1}}
+
+/* ===== WINDOWS TASKBAR ===== */
+.taskbar{
+  background:rgba(235,235,242,0.92);backdrop-filter:blur(24px);
+  border-top:1px solid rgba(0,0,0,0.06);
+  display:flex;align-items:center;justify-content:center;
+  padding:0 16px;position:relative;z-index:20;
+}
+
+/* Taskbar center group */
+.tb-apps{display:flex;align-items:center;gap:4px}
+.tb-app{
+  width:40px;height:38px;border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;transition:background .15s;position:relative;
+}
+.tb-app:hover{background:rgba(0,0,0,0.06)}
+.tb-app svg{width:22px;height:22px;display:block}
+.tb-app.has-bar::after{
+  content:'';position:absolute;bottom:2px;left:50%;transform:translateX(-50%);
+  width:14px;height:3px;border-radius:2px;background:#D9008D;
+}
+
+/* System tray — right side */
+.tb-tray{
+  position:absolute;right:12px;
+  display:flex;align-items:center;gap:8px;font-size:11px;color:#444;
+}
+.tb-tray svg{display:block}
+.tb-datetime{text-align:right;line-height:1.35}
+.tb-time{font-weight:600;font-size:12px}
+.tb-datestr{font-size:10px;color:#666}
+</style>
+</head>
+<body>
+
+<div class="desktop">
+  <div class="wallpaper">
+    <div class="sun"></div>
+    <div class="cloud c1"></div>
+    <div class="cloud c2"></div>
+    <div class="cloud c3"></div>
+
+    <!-- WIOM PULSE WIDGET -->
+    <div class="pulse-widget" onclick="window.location.href='dashboard.html'">
+      <!-- Header -->
+      <div class="w-top">
+        <span class="w-top-logo">∞</span>
+        <span class="w-top-name">Wiom Pulse</span>
+        <span class="w-top-live"><span class="w-live-dot"></span> LIVE</span>
+      </div>
+
+      <!-- 4 KPIs in 2x2 grid -->
+      <div class="w-kpis">
+        <div class="w-kpi">
+          <span class="w-kpi-val cp">7<span class="frac">/9</span></span>
+          <span class="w-kpi-lbl">Shipped / Planned</span>
+        </div>
+        <div class="w-kpi">
+          <span class="w-kpi-val cg">+4.2%</span>
+          <span class="w-kpi-lbl">Metric Impact</span>
+        </div>
+        <div class="w-kpi">
+          <span class="w-kpi-val cr">2</span>
+          <span class="w-kpi-lbl">Blockers</span>
+        </div>
+        <div class="w-kpi">
+          <span class="w-kpi-val ca">4</span>
+          <span class="w-kpi-lbl">Upcoming</span>
+        </div>
+      </div>
+
+      <!-- Summary -->
+      <div class="w-sum">
+        <strong>OTP Revamp</strong> — login +9.4% &nbsp;·&nbsp;
+        <strong>UPI Autopay</strong> on hold &nbsp;·&nbsp;
+        <strong>Sprint 25</strong> starts Mar 19
+      </div>
+
+      <!-- CTA -->
+      <div class="w-cta">
+        Open Full Dashboard <span class="w-arrow">→</span>
+      </div>
+    </div>
+
+    <div class="hint">Click the widget to open Wiom Pulse Dashboard</div>
+  </div>
+
+  <!-- WINDOWS TASKBAR -->
+  <div class="taskbar">
+    <div class="tb-apps">
+      <!-- Windows Start -->
+      <div class="tb-app" title="Start">
+        <svg viewBox="0 0 24 24"><rect x="2" y="2" width="9" height="9" rx="1.5" fill="#0078D4"/><rect x="13" y="2" width="9" height="9" rx="1.5" fill="#0078D4"/><rect x="2" y="13" width="9" height="9" rx="1.5" fill="#0078D4"/><rect x="13" y="13" width="9" height="9" rx="1.5" fill="#0078D4"/></svg>
+      </div>
+      <!-- File Explorer -->
+      <div class="tb-app" title="File Explorer">
+        <svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="15" rx="2" fill="#FFC107"/><path d="M2 9h20" stroke="#F9A825" stroke-width=".5"/><rect x="2" y="5" width="8" height="4" rx="1" fill="#FFB300"/></svg>
+      </div>
+      <!-- Chrome -->
+      <div class="tb-app" title="Google Chrome">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#fff"/><path d="M12 7a5 5 0 014.33 2.5H22A11 11 0 005 5.5Z" fill="#EA4335"/><path d="M16.33 9.5A5 5 0 0114.5 16.33L11.5 22A11 11 0 0022 9.5Z" fill="#FBBC05"/><path d="M14.5 16.33A5 5 0 017.67 14.5L2 9.5A11 11 0 0011.5 22Z" fill="#34A853"/><circle cx="12" cy="12" r="4" fill="#4285F4"/><circle cx="12" cy="12" r="2.2" fill="#fff"/></svg>
+      </div>
+      <!-- Claude -->
+      <div class="tb-app has-bar" title="Claude">
+        <svg viewBox="0 0 24 24"><rect width="24" height="24" rx="6" fill="#D97757"/><text x="12" y="16.5" text-anchor="middle" font-size="12" font-weight="700" fill="#fff" font-family="sans-serif">C</text></svg>
+      </div>
+      <!-- Terminal -->
+      <div class="tb-app" title="Terminal">
+        <svg viewBox="0 0 24 24"><rect x="1" y="3" width="22" height="18" rx="3" fill="#1e1e2e"/><path d="M6 9l4 3-4 3" stroke="#50fa7b" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><line x1="13" y1="15" x2="18" y2="15" stroke="#6272a4" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </div>
+      <!-- Slack -->
+      <div class="tb-app" title="Slack">
+        <svg viewBox="0 0 24 24"><rect x="9" y="2" width="3" height="7" rx="1.5" fill="#E01E5A"/><rect x="2" y="9" width="7" height="3" rx="1.5" fill="#36C5F0"/><rect x="14" y="9" width="3" height="7" rx="1.5" fill="#2EB67D"/><rect x="9" y="14" width="7" height="3" rx="1.5" fill="#ECB22E"/><rect x="6" y="2" width="3" height="3" rx="1.5" fill="#E01E5A"/><rect x="2" y="14" width="3" height="3" rx="1.5" fill="#36C5F0"/><rect x="14" y="6" width="3" height="3" rx="1.5" fill="#2EB67D"/><rect x="18" y="9" width="3" height="3" rx="1.5" fill="#ECB22E"/><rect x="2" y="6" width="7" height="3" rx="1.5" fill="#E01E5A"/><rect x="6" y="14" width="3" height="7" rx="1.5" fill="#36C5F0"/><rect x="14" y="2" width="7" height="3" rx="1.5" fill="#2EB67D"/><rect x="9" y="18" width="3" height="3" rx="1.5" fill="#ECB22E"/></svg>
+      </div>
+      <!-- Wiom Pulse -->
+      <div class="tb-app has-bar" title="Wiom Pulse" onclick="window.location.href='dashboard.html'" style="cursor:pointer">
+        <svg viewBox="0 0 24 24"><rect width="24" height="24" rx="6" fill="#D9008D"/><text x="12" y="17" text-anchor="middle" font-size="14" font-weight="700" fill="#fff" font-family="sans-serif">∞</text></svg>
+      </div>
+    </div>
+
+    <!-- System Tray -->
+    <div class="tb-tray">
+      <span style="font-size:12px;opacity:.6">▲</span>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2" stroke-linecap="round"><path d="M5 12.55a11 11 0 0114.08 0"/><path d="M1.42 9a16 16 0 0121.16 0"/><path d="M8.53 16.11a6 6 0 016.95 0"/><circle cx="12" cy="20" r="1" fill="#555"/></svg>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2" stroke-linecap="round"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M15.54 8.46a5 5 0 010 7.07"/></svg>
+      <svg width="22" height="14" viewBox="0 0 28 14" fill="none"><rect x="1" y="1" width="22" height="12" rx="2" stroke="#555" stroke-width="1.2"/><rect x="2.5" y="2.5" width="17" height="9" rx="1" fill="#1FAD4E"/><rect x="24" y="4" width="3" height="6" rx="1" fill="#555"/></svg>
+      <div class="tb-datetime">
+        <div class="tb-time" id="tbTime"></div>
+        <div class="tb-datestr" id="tbDate"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+!function(){
+  function update(){
+    var now=new Date(),h=now.getHours(),m=now.getMinutes(),ap=h>=12?'PM':'AM';
+    h=h%12||12;
+    document.getElementById('tbTime').textContent=h+':'+(m<10?'0':'')+m+' '+ap;
+    var mm=now.getMonth()+1,dd=now.getDate(),yy=now.getFullYear();
+    document.getElementById('tbDate').textContent=(mm<10?'0':'')+mm+'/'+(dd<10?'0':'')+dd+'/'+yy;
+  }
+  update();setInterval(update,30000);
+}();
+</script>
+</body>
+</html>

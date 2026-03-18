@@ -1,0 +1,1358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wiom Pulse — Release Intelligence Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+--p:#D9008D;--p2:rgba(217,0,141,.08);--p3:rgba(217,0,141,.2);--p4:rgba(217,0,141,.5);
+--s:#FED800;--s-text:#B8900A;--s2:rgba(254,216,0,.12);--s3:rgba(254,216,0,.25);--s4:rgba(254,216,0,.5);
+--bg:#ffffff;--bg2:#f7f7fa;--bg3:#eeeff3;--bg4:#dddde5;--bg5:#c8c8d4;
+--tx:#1a1a2e;--tx2:#555570;--tx3:#8888a0;
+--r:8px;--r2:12px;--r3:16px;
+--shadow:0 4px 24px rgba(0,0,0,.08);
+--red:#E03030;--green:#1FAD4E;--amber:#E5A100;
+}
+html{font-size:14px;}
+body{font-family:'Noto Sans',sans-serif;background:var(--bg);color:var(--tx);overflow:hidden;height:100vh;}
+a{color:var(--p);text-decoration:none;}
+::-webkit-scrollbar{width:6px;}
+::-webkit-scrollbar-track{background:#f0f0f4;}
+::-webkit-scrollbar-thumb{background:#c8c8d4;border-radius:3px;}
+::-webkit-scrollbar-thumb:hover{background:#a0a0b0;}
+
+/* ACTION BAR */
+.action-bar{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;}
+.action-btn{display:flex;align-items:center;gap:6px;padding:8px 16px;border:1px solid var(--bg4);border-radius:8px;background:var(--bg);cursor:pointer;font-family:inherit;font-size:13px;font-weight:600;color:var(--tx2);transition:all .2s;}
+.action-btn:hover{border-color:var(--p);color:var(--p);background:var(--p2);}
+.action-btn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+
+/* MODALS */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:1000;align-items:center;justify-content:center;}
+.modal{background:var(--bg);border-radius:16px;padding:28px;width:480px;max-width:90vw;box-shadow:0 12px 40px rgba(0,0,0,.15);max-height:80vh;overflow-y:auto;}
+.modal h3{font-size:18px;font-weight:700;margin-bottom:16px;color:var(--tx);}
+.modal-close{position:absolute;top:16px;right:20px;background:none;border:none;font-size:22px;cursor:pointer;color:var(--tx3);}
+.modal-row{display:flex;align-items:center;gap:12px;padding:12px;border:1px solid var(--bg4);border-radius:10px;margin-bottom:10px;cursor:pointer;transition:all .2s;}
+.modal-row:hover{border-color:var(--p);background:var(--p2);}
+.modal-row .modal-icon{font-size:22px;width:36px;text-align:center;}
+.modal-row .modal-text{flex:1;}
+.modal-row .modal-text strong{font-size:14px;display:block;color:var(--tx);}
+.modal-row .modal-text span{font-size:12px;color:var(--tx3);}
+
+/* SCHEDULE FORM */
+.sched-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--bg3);}
+.sched-row:last-child{border-bottom:none;}
+.sched-label{width:100px;font-weight:700;font-size:14px;color:var(--tx);display:flex;align-items:center;gap:6px;}
+.sched-label span{font-size:18px;}
+.sched-select,.sched-time{padding:6px 10px;border:1px solid var(--bg4);border-radius:6px;font-family:inherit;font-size:13px;color:var(--tx);background:var(--bg2);}
+.sched-select{min-width:100px;}
+.sched-time{width:90px;}
+.sched-save{margin-top:16px;padding:10px 24px;background:var(--p);color:#fff;border:none;border-radius:8px;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;transition:all .2s;width:100%;}
+.sched-save:hover{background:#c0007d;}
+
+/* NUDGE */
+.nudge-wrap{position:relative;display:inline-block;margin-left:8px;}
+.nudge-btn{padding:4px 10px;font-size:11px;font-weight:700;border:1px solid var(--p3);border-radius:6px;background:var(--p2);color:var(--p);cursor:pointer;font-family:inherit;transition:all .2s;}
+.nudge-btn:hover{background:var(--p);color:#fff;}
+.nudge-dropdown{display:none;position:absolute;top:100%;left:0;margin-top:4px;background:var(--bg);border:1px solid var(--bg4);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.1);z-index:50;min-width:160px;padding:6px 0;}
+.nudge-dropdown.show{display:block;}
+.nudge-opt{display:flex;align-items:center;gap:8px;padding:8px 14px;font-size:13px;color:var(--tx2);cursor:pointer;transition:all .15s;}
+.nudge-opt:hover{background:var(--p2);color:var(--p);}
+
+/* TOAST */
+.action-toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--tx);color:var(--bg);padding:12px 28px;border-radius:10px;font-size:14px;font-weight:600;z-index:2000;transition:transform .3s ease,opacity .3s;opacity:0;pointer-events:none;}
+.action-toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
+
+/* LAYOUT */
+.app{display:flex;height:100vh;width:100vw;}
+.sidebar{width:220px;min-width:220px;background:var(--bg2);border-right:1px solid var(--bg4);display:flex;flex-direction:column;z-index:10;}
+.main-area{flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative;}
+.top-bar{height:56px;background:var(--bg2);border-bottom:1px solid var(--bg4);display:flex;align-items:center;justify-content:space-between;padding:0 28px;flex-shrink:0;}
+.content-wrap{flex:1;overflow-y:auto;padding:24px 28px 40px;position:relative;}
+
+/* SIDEBAR */
+.sidebar-brand{padding:20px 18px 16px;border-bottom:1px solid var(--bg4);}
+.sidebar-brand h1{font-size:20px;font-weight:700;color:var(--tx);display:flex;align-items:center;gap:6px;}
+.sidebar-brand h1 .inf{color:var(--p);font-size:26px;line-height:1;}
+.sidebar-brand p{font-size:12px;color:var(--tx3);margin-top:2px;letter-spacing:.5px;}
+.nav{flex:1;padding:12px 0;overflow-y:auto;}
+.nav-item{display:flex;align-items:center;gap:12px;padding:11px 18px;cursor:pointer;color:var(--tx2);font-size:14px;font-weight:400;transition:all .2s;border-left:3px solid transparent;position:relative;}
+.nav-item:hover{color:var(--tx);background:var(--bg3);}
+.nav-item.active{color:var(--p);background:var(--p2);border-left-color:var(--p);font-weight:700;}
+.nav-item svg{width:18px;height:18px;flex-shrink:0;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+.nav-item .badge-dot{position:absolute;right:14px;width:7px;height:7px;border-radius:50%;background:var(--s);}
+.sidebar-footer{padding:14px 18px;border-top:1px solid var(--bg4);font-size:12px;color:var(--tx3);}
+
+/* TOP BAR */
+.top-title{font-size:18px;font-weight:700;color:var(--tx);}
+.top-right{display:flex;align-items:center;gap:16px;}
+.top-right .pill{background:var(--bg4);padding:5px 12px;border-radius:20px;font-size:12px;color:var(--tx2);}
+.avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--p),var(--s));display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--bg);}
+
+/* PAGE CONTAINER */
+.page{display:none;animation:fadeUp .35s ease;}
+.page.active{display:block;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+
+/* SHIMMER */
+.shimmer-overlay{position:absolute;inset:0;background:rgba(255,255,255,.9);z-index:5;display:none;align-items:center;justify-content:center;}
+.shimmer-overlay.show{display:flex;}
+.shimmer-bar{width:200px;height:4px;background:var(--bg4);border-radius:2px;overflow:hidden;position:relative;}
+.shimmer-bar::after{content:'';position:absolute;left:-60%;width:60%;height:100%;background:linear-gradient(90deg,transparent,var(--p),transparent);animation:shimMove .8s ease infinite;}
+@keyframes shimMove{to{left:100%;}}
+
+/* TABS */
+.tabs{display:flex;gap:4px;margin-bottom:20px;border-bottom:1px solid var(--bg4);padding-bottom:0;flex-wrap:wrap;}
+.tab-btn{padding:10px 16px;font-size:14px;font-weight:400;color:var(--tx2);cursor:pointer;border:none;background:none;border-bottom:2px solid transparent;transition:all .2s;font-family:inherit;}
+.tab-btn:hover{color:var(--tx);}
+.tab-btn.active{color:var(--p);border-bottom-color:var(--p);font-weight:700;}
+.tab-content{display:none;animation:fadeUp .3s ease;}
+.tab-content.active{display:block;}
+
+/* CARDS */
+.card{background:#f3f3f8;border:1px solid var(--bg4);border-radius:var(--r2);padding:20px;transition:all .25s;position:relative;box-shadow:0 1px 6px rgba(0,0,0,0.06);}
+.card:hover{transform:translateY(-2px);box-shadow:var(--shadow);border-color:var(--bg5);}
+.card-accent{border-left:3px solid var(--p);}
+.card-accent-s{border-left:3px solid var(--s);}
+.card-title{font-size:16px;font-weight:700;margin-bottom:8px;color:var(--tx);}
+.card-sub{font-size:14px;color:var(--tx2);}
+
+/* STATS ROW */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px;}
+.stat-card{background:#f3f3f8;border:1px solid var(--bg4);border-radius:var(--r2);padding:18px 20px;position:relative;overflow:hidden;transition:all .25s;box-shadow:0 1px 6px rgba(0,0,0,0.06);}
+.stat-card:hover{transform:translateY(-2px);box-shadow:var(--shadow);}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;}
+.stat-card:nth-child(1)::before{background:var(--p);}
+.stat-card:nth-child(2)::before{background:var(--s);}
+.stat-card:nth-child(3)::before{background:var(--p);}
+.stat-card:nth-child(4)::before{background:var(--s);}
+.stat-label{font-size:13px;color:var(--tx3);margin-bottom:6px;text-transform:uppercase;letter-spacing:.6px;}
+.stat-val{font-size:32px;font-weight:700;color:var(--tx);}
+.stat-card:nth-child(1) .stat-val{color:var(--p);}
+.stat-card:nth-child(2) .stat-val{color:var(--s-text);}
+.stat-card:nth-child(4) .stat-val{color:var(--s-text);}
+.stat-delta{font-size:12px;margin-top:4px;color:var(--tx3);}
+.stat-delta.up{color:var(--green);}
+.stat-delta.down{color:var(--red);}
+
+/* GRID */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;}
+.g23{display:grid;grid-template-columns:2fr 1fr;gap:16px;}
+.g32{display:grid;grid-template-columns:1fr 2fr;gap:16px;}
+.mb16{margin-bottom:16px;}
+.mb24{margin-bottom:24px;}
+.section-title{font-size:18px;font-weight:700;margin-bottom:14px;color:var(--tx);display:flex;align-items:center;gap:8px;}
+.section-title .dot{width:8px;height:8px;border-radius:50%;background:var(--p);}
+
+/* TABLE */
+.tbl{width:100%;border-collapse:collapse;font-size:14px;}
+.tbl th{text-align:left;padding:10px 14px;color:var(--tx3);font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--bg4);}
+.tbl td{padding:10px 14px;border-bottom:1px solid var(--bg3);color:var(--tx2);}
+.tbl tr:hover td{background:var(--bg3);}
+
+/* BADGES */
+.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:700;letter-spacing:.3px;}
+.badge-p{background:var(--p2);color:var(--p);}
+.badge-s{background:var(--s2);color:var(--s-text);}
+.badge-high{background:rgba(224,48,48,.12);color:var(--red);}
+.badge-med{background:rgba(229,161,0,.12);color:var(--amber);}
+.badge-low{background:rgba(31,173,78,.1);color:var(--green);}
+.badge-done{background:rgba(31,173,78,.1);color:var(--green);}
+.badge-progress{background:rgba(229,161,0,.12);color:var(--amber);}
+.badge-pending{background:var(--bg4);color:var(--tx3);}
+.badge-alert{background:rgba(224,48,48,.12);color:var(--red);animation:pulseAlert 1.5s ease infinite;}
+@keyframes pulseAlert{0%,100%{opacity:1;}50%{opacity:.5;}}
+
+/* BARS */
+.bar-wrap{height:8px;background:var(--bg4);border-radius:4px;overflow:hidden;margin:4px 0;}
+.bar-fill{height:100%;border-radius:4px;transition:width .6s ease;}
+.bar-p{background:linear-gradient(90deg,var(--p),#ff4db8);}
+.bar-s{background:linear-gradient(90deg,var(--s),#ffe34d);}
+.bar-neg{background:linear-gradient(90deg,var(--red),#f06060);}
+
+/* PROGRESS */
+.progress-bar{height:12px;background:var(--bg4);border-radius:6px;overflow:hidden;position:relative;}
+.progress-fill{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--p),var(--s));transition:width 1s ease;position:relative;}
+.progress-fill::after{content:'';position:absolute;right:0;top:0;bottom:0;width:20px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.3));animation:progShine 1.5s ease infinite;}
+@keyframes progShine{0%,100%{opacity:0;}50%{opacity:1;}}
+
+/* FUNNEL */
+.funnel{display:flex;flex-direction:column;align-items:center;gap:0;margin:20px 0;}
+.funnel-step{display:flex;align-items:center;justify-content:center;color:var(--tx);font-size:13px;font-weight:700;transition:all .3s;position:relative;padding:14px;}
+
+/* PHONE FRAME */
+.phone-frame{width:280px;height:500px;background:#ffffff;border:2px solid #c8c8d4;border-radius:28px;overflow:hidden;position:relative;margin:0 auto;}
+.phone-notch{width:100px;height:20px;background:#1a1a2e;border-radius:0 0 12px 12px;position:absolute;top:0;left:50%;transform:translateX(-50%);z-index:2;}
+.phone-screen{height:100%;overflow-y:auto;display:flex;flex-direction:column;}
+
+/* CHAT */
+.chat-wrap{max-width:700px;margin:0 auto;display:flex;flex-direction:column;height:calc(100vh - 140px);}
+.chat-messages{flex:1;overflow-y:auto;padding:20px 0;display:flex;flex-direction:column;gap:16px;}
+.chat-msg{display:flex;gap:10px;max-width:85%;}
+.chat-msg.user{align-self:flex-end;flex-direction:row-reverse;}
+.chat-bubble{padding:12px 16px;border-radius:var(--r2);font-size:14px;line-height:1.6;}
+.chat-msg.user .chat-bubble{background:var(--p);color:white;border-bottom-right-radius:4px;}
+.chat-msg.bot .chat-bubble{background:#f0f0f6;color:var(--tx);border-bottom-left-radius:4px;border:1px solid #dddde5;}
+.chat-avatar{width:32px;height:32px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;}
+.chat-msg.user .chat-avatar{background:var(--bg4);color:var(--tx2);}
+.chat-msg.bot .chat-avatar{background:linear-gradient(135deg,var(--p),var(--s));color:var(--bg);}
+.chat-input-area{padding:12px 0;border-top:1px solid var(--bg4);}
+.chat-chips{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;}
+.chat-chip{padding:6px 14px;border:1px solid var(--bg5);border-radius:20px;font-size:13px;color:var(--tx2);cursor:pointer;transition:all .2s;background:#f5f5f8;font-family:inherit;}
+.chat-chip:hover{border-color:var(--p);color:var(--p);background:var(--p2);}
+.chat-input-row{display:flex;gap:8px;}
+.chat-input{flex:1;background:#f5f5f8;border:1px solid #dddde5;border-radius:var(--r);padding:10px 14px;color:var(--tx);font-size:14px;font-family:inherit;outline:none;transition:border .2s;}
+.chat-input:focus{border-color:var(--p);}
+.chat-send{background:var(--p);color:white;border:none;border-radius:var(--r);padding:10px 18px;cursor:pointer;font-weight:700;font-size:13px;font-family:inherit;transition:all .2s;}
+.chat-send:hover{background:#ff1aa0;}
+.typing-dots{display:flex;gap:4px;padding:12px 16px;}
+.typing-dots span{width:8px;height:8px;border-radius:50%;background:var(--tx3);animation:dotBounce 1.2s ease infinite;}
+.typing-dots span:nth-child(2){animation-delay:.2s;}
+.typing-dots span:nth-child(3){animation-delay:.4s;}
+@keyframes dotBounce{0%,60%,100%{transform:translateY(0);}30%{transform:translateY(-6px);}}
+
+/* GAUGE */
+.gauge{width:80px;height:80px;border-radius:50%;position:relative;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.gauge-val{font-size:20px;font-weight:700;z-index:1;}
+
+/* ALERT CARD */
+.alert-card{background:rgba(224,48,48,.04);border:1px solid rgba(224,48,48,.2);border-radius:var(--r2);padding:20px;position:relative;overflow:hidden;}
+.alert-card::before{content:'';position:absolute;top:0;left:0;width:5px;height:100%;background:var(--red);animation:pulseAlert 1.5s ease infinite;}
+.alert-card .alert-title{font-size:16px;font-weight:700;color:var(--red);margin-bottom:8px;display:flex;align-items:center;gap:8px;}
+.alert-card .alert-body{font-size:14px;color:var(--tx2);line-height:1.7;}
+
+/* DEPENDENCY MAP */
+.dep-map{display:flex;flex-direction:column;gap:20px;padding:20px;}
+.dep-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+.dep-node{background:#f3f3f8;border:1px solid var(--bg5);border-radius:var(--r);padding:10px 16px;font-size:13px;color:var(--tx);position:relative;min-width:140px;text-align:center;}
+.dep-arrow{color:var(--tx3);font-size:18px;flex-shrink:0;}
+.dep-node.missing{border-color:var(--red);border-style:dashed;background:rgba(224,48,48,.08);}
+
+/* READINESS */
+.ready-icon{font-size:16px;text-align:center;}
+.ready-yes{color:var(--green);}
+.ready-no{color:var(--red);}
+.ready-wip{color:var(--amber);}
+
+/* EMAIL MOCKUP */
+.email-mock{background:var(--bg3);border-radius:var(--r2);overflow:hidden;max-width:500px;margin:0 auto;border:1px solid var(--bg4);}
+.email-header{padding:14px 18px;border-bottom:1px solid var(--bg4);font-size:12px;color:var(--tx2);}
+.email-body{padding:18px;font-size:13px;color:var(--tx2);line-height:1.7;}
+.email-brand-bar{height:4px;background:linear-gradient(90deg,var(--p),var(--s));}
+
+/* SLACK MOCKUP */
+.slack-mock{background:var(--bg2);border-radius:var(--r2);overflow:hidden;max-width:500px;margin:0 auto;border:1px solid var(--bg4);}
+.slack-header{background:var(--bg4);padding:10px 16px;font-size:13px;font-weight:700;color:var(--tx);}
+.slack-msg{padding:12px 16px;display:flex;gap:10px;}
+.slack-msg-av{width:28px;height:28px;border-radius:4px;background:linear-gradient(135deg,var(--p),var(--s));flex-shrink:0;}
+.slack-msg-body{font-size:12px;color:var(--tx2);line-height:1.6;}
+.slack-msg-name{font-weight:700;color:var(--tx);margin-bottom:2px;font-size:12px;}
+
+/* WIDGET */
+.widget-card{background:var(--bg3);border-radius:var(--r2);padding:12px;display:inline-block;border:1px solid var(--bg5);animation:widgetPulse 3s ease infinite;}
+@keyframes widgetPulse{0%,100%{box-shadow:0 0 8px 0 rgba(217,0,141,.3);}50%{box-shadow:0 0 20px 8px rgba(217,0,141,.15);}}
+
+/* CHANNEL ANIMATIONS */
+@keyframes msgSlideIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes emailArrive{from{opacity:0;transform:translateY(-20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes typeAppear{0%{width:0}100%{width:100%}}
+@keyframes slackFadeIn{0%,30%{opacity:0;transform:translateY(6px)}40%,100%{opacity:1;transform:translateY(0)}}
+
+.wa-msg-anim{animation:msgSlideIn 1s ease both;animation-iteration-count:infinite;animation-duration:7s;}
+.wa-msg-anim:nth-child(1){animation-delay:0s;}
+.wa-msg-anim:nth-child(2){animation-delay:1.5s;}
+.email-body-anim{animation:emailArrive 1.2s ease both;animation-iteration-count:infinite;animation-duration:8s;}
+.slack-msg-anim{animation:slackFadeIn 2s ease both;animation-iteration-count:infinite;animation-duration:7s;}
+.slack-msg-anim:nth-child(2){animation-delay:2s;}
+.slack-msg-anim:nth-child(3){animation-delay:3.5s;}
+
+/* EXPANDABLE */
+.expandable{border:1px solid var(--bg4);border-radius:var(--r);margin-bottom:8px;overflow:hidden;transition:all .3s;}
+.expandable-header{padding:14px 18px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;background:var(--bg2);transition:background .2s;}
+.expandable-header:hover{background:var(--bg3);}
+.expandable-body{max-height:0;overflow:hidden;transition:max-height .4s ease;padding:0 18px;}
+.expandable.open .expandable-body{max-height:400px;padding:14px 18px;}
+.expandable-chevron{transition:transform .3s;color:var(--tx3);}
+.expandable.open .expandable-chevron{transform:rotate(180deg);}
+
+/* SEARCH */
+.search-bar{background:var(--bg3);border:1px solid var(--bg4);border-radius:var(--r);padding:10px 16px;width:100%;color:var(--tx);font-size:13px;font-family:inherit;outline:none;transition:border .2s;margin-bottom:16px;}
+.search-bar:focus{border-color:var(--p);}
+
+/* FLASHING */
+.flash-dot{width:10px;height:10px;border-radius:50%;background:var(--p);display:inline-block;animation:flashDot 1s ease infinite;}
+@keyframes flashDot{0%,100%{opacity:1;box-shadow:0 0 4px var(--p);}50%{opacity:.3;box-shadow:0 0 12px var(--p);}}
+
+/* SVG CHART LINES */
+.line-chart svg{width:100%;height:120px;}
+.line-chart path{fill:none;stroke-width:2;stroke-linecap:round;}
+
+/* TIMELINE */
+.timeline{position:relative;padding-left:24px;}
+.timeline::before{content:'';position:absolute;left:8px;top:0;bottom:0;width:2px;background:var(--bg4);}
+.timeline-item{position:relative;margin-bottom:16px;padding-left:20px;}
+.timeline-item::before{content:'';position:absolute;left:-20px;top:6px;width:12px;height:12px;border-radius:50%;background:var(--p);border:2px solid var(--bg2);}
+.timeline-item:nth-child(even)::before{background:var(--s);}
+.timeline-date{font-size:11px;color:var(--tx3);margin-bottom:2px;}
+.timeline-text{font-size:13px;color:var(--tx2);}
+
+/* MISC */
+.flex{display:flex;}
+.flex-col{flex-direction:column;}
+.items-center{align-items:center;}
+.justify-between{justify-content:space-between;}
+.gap8{gap:8px;}
+.gap12{gap:12px;}
+.gap16{gap:16px;}
+.gap20{gap:20px;}
+.text-p{color:var(--p);}
+.text-s{color:var(--s-text);}
+.text-muted{color:var(--tx3);}
+.text-sm{font-size:12px;}
+.text-xs{font-size:11px;}
+.fw700{font-weight:700;}
+.mt8{margin-top:8px;}
+.mt12{margin-top:12px;}
+.mt16{margin-top:16px;}
+.mt24{margin-top:24px;}
+.mb8{margin-bottom:8px;}
+.w100{width:100%;}
+
+/* PRIORITY LIST */
+.pri-item{display:flex;align-items:center;gap:14px;padding:14px 18px;background:var(--bg2);border:1px solid var(--bg4);border-radius:var(--r);margin-bottom:8px;transition:all .25s;}
+.pri-item:hover{border-color:var(--bg5);transform:translateX(4px);}
+.pri-rank{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0;}
+.pri-drag{color:var(--tx3);font-size:16px;cursor:grab;flex-shrink:0;user-select:none;}
+.pri-body{flex:1;}
+.pri-actions{display:flex;gap:6px;}
+.pri-btn{padding:4px 12px;border-radius:var(--r);font-size:11px;font-weight:700;border:1px solid var(--bg5);background:var(--bg3);color:var(--tx2);cursor:pointer;font-family:inherit;transition:all .2s;}
+.pri-btn:hover{border-color:var(--p);color:var(--p);}
+
+/* RESPONSIVE */
+@media(max-width:1200px){.stats-row{grid-template-columns:repeat(2,1fr);}.g2,.g3,.g23,.g32{grid-template-columns:1fr;}}
+@media(max-width:900px){.sidebar{width:60px;min-width:60px;}.nav-item span,.sidebar-brand p,.sidebar-footer{display:none;}.sidebar-brand h1 span{display:none;}}
+</style>
+</head>
+<body>
+<div class="app">
+<!-- SIDEBAR -->
+<aside class="sidebar">
+<div class="sidebar-brand">
+<h1><span class="inf">&#8734;</span> <span>Wiom Pulse</span></h1>
+<p>Release Intelligence</p>
+</div>
+<nav class="nav" id="nav">
+<div class="nav-item active" data-page="overview" onclick="showPage('overview')">
+<svg viewBox="0 0 24 24"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1h-2z"/></svg>
+<span>Overview</span>
+</div>
+<div class="nav-item" data-page="prerelease" onclick="showPage('prerelease')">
+<svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+<span>Pre-Release</span>
+</div>
+<div class="nav-item" data-page="livemon" onclick="showPage('livemon')">
+<svg viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+<span>Live Monitoring</span>
+<span class="badge-dot"></span>
+</div>
+<div class="nav-item" data-page="impact" onclick="showPage('impact')">
+<svg viewBox="0 0 24 24"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6m6 0h6m-6 0V9a2 2 0 012-2h2a2 2 0 012 2v10m6 0v-4a2 2 0 00-2-2h-2a2 2 0 00-2 2v4"/></svg>
+<span>Impact Analysis</span>
+</div>
+<div class="nav-item" data-page="learning" onclick="showPage('learning')">
+<svg viewBox="0 0 24 24"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+<span>Learning Loop</span>
+</div>
+<div class="nav-item" data-page="channels" onclick="showPage('channels')">
+<svg viewBox="0 0 24 24"><path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+<span>Channels</span>
+</div>
+<div class="nav-item" data-page="askpulse" onclick="showPage('askpulse')">
+<svg viewBox="0 0 24 24"><path d="M9.663 17h4.674M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+<span>Ask Pulse</span>
+</div>
+</nav>
+<div class="sidebar-footer">v1.0 &middot; Sprint 24</div>
+</aside>
+
+<!-- MAIN -->
+<div class="main-area">
+<header class="top-bar">
+<div class="top-title" id="topTitle">Overview</div>
+<div class="top-right">
+<div class="pill">Sprint 24 &middot; Mar 12 &#8211; 18, 2026</div>
+<div class="pill" style="background:var(--p2);color:var(--p);">&#9679; Live</div>
+<div class="avatar">YG</div>
+</div>
+</header>
+<div class="content-wrap" id="contentWrap">
+<div class="shimmer-overlay" id="shimmer"><div class="shimmer-bar"></div></div>
+
+<!-- =================== OVERVIEW =================== -->
+<div class="page active" id="page-overview">
+<!-- Action Bar -->
+<div class="action-bar">
+<button class="action-btn" onclick="showModal('shareModal')"><svg viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg> Download / Share</button>
+<button class="action-btn" onclick="showModal('scheduleModal')"><svg viewBox="0 0 24 24"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg> Schedule Channels</button>
+<button class="action-btn" onclick="showModal('quickSendModal')"><svg viewBox="0 0 24 24"><path d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg> Quick Send</button>
+</div>
+<div class="stats-row">
+<div class="stat-card"><div class="stat-label">Features Shipped This Week</div><div class="stat-val">7</div><div class="stat-delta up">+2 from last week</div></div>
+<div class="stat-card"><div class="stat-label">Impact Score</div><div class="stat-val">+4.2%</div><div class="stat-delta up">Composite NPS-weighted</div></div>
+<div class="stat-card"><div class="stat-label">Active Alerts</div><div class="stat-val">1</div><div class="stat-delta down">Recharge OTP drop-off</div></div>
+<div class="stat-card"><div class="stat-label">Sprint Health</div><div class="stat-val">87%</div><div class="stat-delta up">On track</div></div>
+</div>
+
+<div class="g23 mb24">
+<div>
+<div class="section-title"><span class="dot"></span> This Week's Highlights</div>
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;" class="mb24">
+<div class="card card-accent"><div class="card-title">Recharge Flow v2</div><div class="card-sub">Simplified 4-step recharge with UPI autopay. Success rate tracking in progress.</div><div class="mt8"><span class="badge badge-p">Platform Pod</span></div></div>
+<div class="card card-accent-s"><div class="card-title">Plan Comparison Page</div><div class="card-sub">Side-by-side plan comparison for Home Users. Upgrades +14% nationally.</div><div class="mt8"><span class="badge badge-s">App Pod</span></div></div>
+<div class="card card-accent"><div class="card-title">Installer App v3</div><div class="card-sub">Offline-first mode for field technicians. Reduces installation time by 20%.</div><div class="mt8"><span class="badge badge-p">Field Ops Pod</span></div></div>
+</div>
+<div class="section-title"><span class="dot" style="background:var(--red)"></span> Attention Needed</div>
+<div class="flex flex-col gap8">
+<div class="alert-card"><div class="alert-title"><span class="flash-dot"></span> Recharge OTP Drop-off</div><div class="alert-body">Success rate dropped 3% post-deploy. 60% attributed to OTP step abandonment. Recommended: Simplify OTP UX.</div></div>
+<div class="card" style="border-color:rgba(224,48,48,.2);"><div class="card-title" style="color:var(--red);">Dependency Risk: Installer API</div><div class="card-sub">Installer App v3 (Field Ops) depends on Location API from Platform pod. Ticket not yet created. ETA at risk.</div><div style="margin-top:8px"><div class="nudge-wrap"><button class="nudge-btn" onclick="toggleNudge(this)">Nudge Platform Pod ▾</button><div class="nudge-dropdown"><div class="nudge-opt" onclick="nudgeAction('Platform Pod Lead','Slack')">⚡ Nudge on Slack</div><div class="nudge-opt" onclick="nudgeAction('Platform Pod Lead','WhatsApp')">💬 Nudge on WhatsApp</div><div class="nudge-opt" onclick="nudgeAction('Platform Pod Lead','Email')">📧 Nudge via Email</div></div></div></div></div>
+<div class="card" style="border-color:rgba(229,161,0,.2);"><div class="card-title" style="color:var(--amber);">Stakeholder Readiness Gap</div><div class="card-sub">Support team not yet briefed on Recharge Flow v2 changes. Training material pending.</div><div style="margin-top:8px"><div class="nudge-wrap"><button class="nudge-btn" onclick="toggleNudge(this)">Nudge Support Team ▾</button><div class="nudge-dropdown"><div class="nudge-opt" onclick="nudgeAction('Support Team Lead','Slack')">⚡ Nudge on Slack</div><div class="nudge-opt" onclick="nudgeAction('Support Team Lead','WhatsApp')">💬 Nudge on WhatsApp</div><div class="nudge-opt" onclick="nudgeAction('Support Team Lead','Email')">📧 Nudge via Email</div></div></div></div></div>
+</div>
+</div>
+<div>
+<div class="section-title"><span class="dot" style="background:var(--s)"></span> Upcoming Releases</div>
+<div class="timeline">
+<div class="timeline-item"><div class="timeline-date">Mar 19</div><div class="timeline-text">OTP Revamp &#8212; Login & Auth Pod</div></div>
+<div class="timeline-item"><div class="timeline-date">Mar 21</div><div class="timeline-text">Payment Gateway Failover &#8212; Platform Pod</div></div>
+<div class="timeline-item"><div class="timeline-date">Mar 24</div><div class="timeline-text">Self-Service Plan Change &#8212; App Pod</div></div>
+<div class="timeline-item"><div class="timeline-date">Mar 26</div><div class="timeline-text">Onboarding Wizard v2 &#8212; App Pod</div></div>
+<div class="timeline-item"><div class="timeline-date">Mar 28</div><div class="timeline-text">Network Health Dashboard &#8212; Data Pod</div></div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- =================== PRE-RELEASE =================== -->
+<div class="page" id="page-prerelease">
+<div class="tabs" id="tabs-prerelease">
+<button class="tab-btn active" onclick="showTab('prerelease','pr-radar')">Release Radar</button>
+<button class="tab-btn" onclick="showTab('prerelease','pr-deps')">Dependency Radar</button>
+<button class="tab-btn" onclick="showTab('prerelease','pr-ready')">Stakeholder Readiness</button>
+<button class="tab-btn" onclick="showTab('prerelease','pr-risk')">Risk Score</button>
+<button class="tab-btn" onclick="showTab('prerelease','pr-sim')">Pre-Release Simulation</button>
+</div>
+
+<div class="tab-content active" id="pr-radar">
+<table class="tbl">
+<thead><tr><th>Feature</th><th>Pod</th><th>Sprint</th><th>Target Date</th><th>Status</th></tr></thead>
+<tbody>
+<tr><td>OTP Revamp</td><td>Platform</td><td>S24</td><td>Mar 19</td><td><span class="badge badge-progress">In Progress</span></td></tr>
+<tr><td>Payment Gateway Failover</td><td>Platform</td><td>S24</td><td>Mar 21</td><td><span class="badge badge-progress">In Progress</span></td></tr>
+<tr><td>Self-Service Plan Change</td><td>App</td><td>S24</td><td>Mar 24</td><td><span class="badge badge-pending">Pending QA</span></td></tr>
+<tr><td>Onboarding Wizard v2</td><td>App</td><td>S25</td><td>Mar 26</td><td><span class="badge badge-pending">Dev</span></td></tr>
+<tr><td>Network Health Dashboard</td><td>Data</td><td>S25</td><td>Mar 28</td><td><span class="badge badge-pending">Design</span></td></tr>
+<tr><td>Installer Offline Sync</td><td>Field Ops</td><td>S25</td><td>Apr 1</td><td><span class="badge badge-pending">Scoping</span></td></tr>
+<tr><td>Recharge Retry Logic</td><td>Platform</td><td>S25</td><td>Apr 3</td><td><span class="badge badge-done">Ready</span></td></tr>
+<tr><td>Usage Analytics Widget</td><td>App</td><td>S25</td><td>Apr 5</td><td><span class="badge badge-pending">Design</span></td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="tab-content" id="pr-deps">
+<div class="section-title"><span class="dot"></span> Cross-Pod Dependencies</div>
+<div class="dep-map">
+<div class="dep-row">
+<div class="dep-node">Installer App v3<br><span class="text-xs text-muted">Field Ops Pod</span></div>
+<div class="dep-arrow">&#8594;</div>
+<div class="dep-node">Location API<br><span class="text-xs text-muted">Platform Pod</span></div>
+<div class="dep-arrow">&#8594;</div>
+<div class="dep-node missing"><span class="badge badge-high">MISSING TICKET</span><br><span class="text-xs" style="color:var(--red);">Ticket not created!</span></div>
+<div style="margin-left:12px;"><span class="badge badge-high">HIGH</span></div>
+<div class="nudge-wrap"><button class="nudge-btn" onclick="toggleNudge(this)">Nudge ▾</button><div class="nudge-dropdown"><div class="nudge-opt" onclick="nudgeAction('Platform Pod','Slack')">⚡ Nudge on Slack</div><div class="nudge-opt" onclick="nudgeAction('Platform Pod','WhatsApp')">💬 Nudge on WhatsApp</div><div class="nudge-opt" onclick="nudgeAction('Platform Pod','Email')">📧 Nudge via Email</div></div></div>
+</div>
+<div class="dep-row">
+<div class="dep-node">Self-Service Plan Change<br><span class="text-xs text-muted">App Pod</span></div>
+<div class="dep-arrow">&#8594;</div>
+<div class="dep-node">Billing API v2<br><span class="text-xs text-muted">Platform Pod</span></div>
+<div class="dep-arrow">&#8594;</div>
+<div class="dep-node" style="border-color:var(--s3);">In Progress<br><span class="text-xs text-muted">ETA: Mar 22</span></div>
+<div style="margin-left:12px;"><span class="badge badge-med">MED</span></div>
+<div class="nudge-wrap"><button class="nudge-btn" onclick="toggleNudge(this)">Nudge ▾</button><div class="nudge-dropdown"><div class="nudge-opt" onclick="nudgeAction('Platform Pod','Slack')">⚡ Nudge on Slack</div><div class="nudge-opt" onclick="nudgeAction('Platform Pod','WhatsApp')">💬 Nudge on WhatsApp</div><div class="nudge-opt" onclick="nudgeAction('Platform Pod','Email')">📧 Nudge via Email</div></div></div>
+</div>
+<div class="dep-row">
+<div class="dep-node">Onboarding Wizard v2<br><span class="text-xs text-muted">App Pod</span></div>
+<div class="dep-arrow">&#8594;</div>
+<div class="dep-node">KYC Verification<br><span class="text-xs text-muted">Platform Pod</span></div>
+<div class="dep-arrow">&#8594;</div>
+<div class="dep-node" style="border-color:var(--green);">Done<br><span class="text-xs" style="color:var(--green);">Deployed</span></div>
+<div style="margin-left:12px;"><span class="badge badge-low">LOW</span></div>
+</div>
+<div class="dep-row">
+<div class="dep-node">Network Health Dashboard<br><span class="text-xs text-muted">Data Pod</span></div>
+<div class="dep-arrow">&#8594;</div>
+<div class="dep-node">Telemetry Pipeline<br><span class="text-xs text-muted">Data Pod</span></div>
+<div class="dep-arrow">&#8594;</div>
+<div class="dep-node" style="border-color:var(--s3);">In QA<br><span class="text-xs text-muted">ETA: Mar 25</span></div>
+<div style="margin-left:12px;"><span class="badge badge-med">MED</span></div>
+</div>
+</div>
+</div>
+
+<div class="tab-content" id="pr-ready">
+<div class="section-title"><span class="dot"></span> Stakeholder Readiness Matrix</div>
+<table class="tbl">
+<thead><tr><th>Release</th><th>Support</th><th>Sales</th><th>Field Ops</th><th>Marketing</th><th>Readiness</th></tr></thead>
+<tbody>
+<tr><td>OTP Revamp</td><td class="ready-icon ready-yes">&#10003;</td><td class="ready-icon ready-yes">&#10003;</td><td class="ready-icon ready-wip">&#9711;</td><td class="ready-icon ready-yes">&#10003;</td><td><span class="badge badge-s">75%</span></td></tr>
+<tr><td>Recharge Flow v2</td><td class="ready-icon ready-no">&#10007;</td><td class="ready-icon ready-yes">&#10003;</td><td class="ready-icon ready-yes">&#10003;</td><td class="ready-icon ready-wip">&#9711;</td><td><span class="badge badge-med">50%</span></td></tr>
+<tr><td>Plan Comparison</td><td class="ready-icon ready-yes">&#10003;</td><td class="ready-icon ready-yes">&#10003;</td><td class="ready-icon ready-yes">&#10003;</td><td class="ready-icon ready-yes">&#10003;</td><td><span class="badge badge-done">100%</span></td></tr>
+<tr><td>Self-Service Plan Change</td><td class="ready-icon ready-wip">&#9711;</td><td class="ready-icon ready-no">&#10007;</td><td class="ready-icon ready-yes">&#10003;</td><td class="ready-icon ready-no">&#10007;</td><td><span class="badge badge-high">25%</span></td></tr>
+<tr><td>Installer App v3</td><td class="ready-icon ready-yes">&#10003;</td><td class="ready-icon ready-yes">&#10003;</td><td class="ready-icon ready-wip">&#9711;</td><td class="ready-icon ready-yes">&#10003;</td><td><span class="badge badge-s">75%</span></td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="tab-content" id="pr-risk">
+<div class="section-title"><span class="dot"></span> Release Risk Scores</div>
+<div class="g2">
+<div class="card" style="border-color:var(--p3);">
+<div class="flex items-center gap16 mb16">
+<div class="gauge" style="background:conic-gradient(var(--p) 0deg, var(--p) 288deg, var(--bg4) 288deg);"><div style="width:64px;height:64px;border-radius:50%;background:var(--bg2);display:flex;align-items:center;justify-content:center;"><span class="gauge-val text-p">8</span></div></div>
+<div><div class="card-title">Recharge Flow v2</div><div class="card-sub">HIGH RISK &#8212; Immediate attention needed</div></div>
+</div>
+<div class="text-sm text-muted mb8">Risk Breakdown</div>
+<div class="mb8"><div class="flex justify-between text-xs mb8"><span>Users Impacted</span><span class="text-p">High (40% of DAU)</span></div><div class="bar-wrap"><div class="bar-fill bar-p" style="width:85%;"></div></div></div>
+<div class="mb8"><div class="flex justify-between text-xs mb8"><span>Revenue Surface</span><span class="text-p">Critical</span></div><div class="bar-wrap"><div class="bar-fill bar-p" style="width:90%;"></div></div></div>
+<div class="mb8"><div class="flex justify-between text-xs mb8"><span>Dependencies</span><span class="text-s">Medium</span></div><div class="bar-wrap"><div class="bar-fill bar-s" style="width:50%;"></div></div></div>
+<div class="mb8"><div class="flex justify-between text-xs mb8"><span>Rollback Plan</span><span class="text-p">Not Ready</span></div><div class="bar-wrap"><div class="bar-fill bar-p" style="width:20%;"></div></div></div>
+<div class="mt12 card" style="background:var(--p2);border-color:var(--p3);"><div class="text-sm"><strong class="text-p">Recommendation:</strong> <span class="text-muted">Create rollback runbook before expanding rollout. Assign on-call engineer for payment flow monitoring.</span></div></div>
+</div>
+<div class="card">
+<div class="flex items-center gap16 mb16">
+<div class="gauge" style="background:conic-gradient(var(--s) 0deg, var(--s) 108deg, var(--bg4) 108deg);"><div style="width:64px;height:64px;border-radius:50%;background:var(--bg2);display:flex;align-items:center;justify-content:center;"><span class="gauge-val text-s">3</span></div></div>
+<div><div class="card-title">Plan Comparison Page</div><div class="card-sub">LOW RISK &#8212; Well prepared</div></div>
+</div>
+<div class="text-sm text-muted mb8">Risk Breakdown</div>
+<div class="mb8"><div class="flex justify-between text-xs mb8"><span>Users Impacted</span><span class="text-s">Low</span></div><div class="bar-wrap"><div class="bar-fill bar-s" style="width:30%;"></div></div></div>
+<div class="mb8"><div class="flex justify-between text-xs mb8"><span>Revenue Surface</span><span class="text-s">Positive</span></div><div class="bar-wrap"><div class="bar-fill bar-s" style="width:40%;"></div></div></div>
+<div class="mb8"><div class="flex justify-between text-xs mb8"><span>Dependencies</span><span class="text-s">Low</span></div><div class="bar-wrap"><div class="bar-fill bar-s" style="width:15%;"></div></div></div>
+<div class="mb8"><div class="flex justify-between text-xs mb8"><span>Rollback Plan</span><span class="text-s">Ready</span></div><div class="bar-wrap"><div class="bar-fill bar-s" style="width:95%;"></div></div></div>
+</div>
+</div>
+</div>
+
+<div class="tab-content" id="pr-sim">
+<div class="section-title"><span class="dot"></span> Pre-Release Simulation: Recharge Flow v2</div>
+<div class="g2">
+<div class="card">
+<div class="card-title">Predicted Metric Range (7-day)</div>
+<div class="card-sub mb16">Recharge Success Rate</div>
+<div class="flex items-center gap8 mb8"><span class="text-xs text-muted" style="width:100px;">Optimistic</span><div class="bar-wrap" style="flex:1;"><div class="bar-fill bar-s" style="width:92%;"></div></div><span class="text-xs text-s">92%</span></div>
+<div class="flex items-center gap8 mb8"><span class="text-xs text-muted" style="width:100px;">Expected</span><div class="bar-wrap" style="flex:1;"><div class="bar-fill bar-p" style="width:85%;"></div></div><span class="text-xs text-p">85%</span></div>
+<div class="flex items-center gap8 mb8"><span class="text-xs text-muted" style="width:100px;">Pessimistic</span><div class="bar-wrap" style="flex:1;"><div class="bar-fill bar-p" style="width:78%;"></div></div><span class="text-xs text-p">78%</span></div>
+<div class="mt12 text-xs text-muted">Historical baseline: 88%</div>
+</div>
+<div class="card">
+<div class="card-title">Historical Comparison</div>
+<div class="card-sub mb16">Similar releases performance</div>
+<div class="flex items-center gap8 mb8"><span class="text-xs text-muted" style="width:140px;">Recharge v1 (Nov '25)</span><div class="bar-wrap" style="flex:1;"><div class="bar-fill bar-s" style="width:86%;"></div></div><span class="text-xs">86%</span></div>
+<div class="flex items-center gap8 mb8"><span class="text-xs text-muted" style="width:140px;">Payment UX (Jan '26)</span><div class="bar-wrap" style="flex:1;"><div class="bar-fill bar-s" style="width:91%;"></div></div><span class="text-xs">91%</span></div>
+<div class="flex items-center gap8 mb8"><span class="text-xs text-muted" style="width:140px;">Quick Recharge (Feb '26)</span><div class="bar-wrap" style="flex:1;"><div class="bar-fill bar-p" style="width:79%;"></div></div><span class="text-xs">79%</span></div>
+<div class="mt16 card" style="background:var(--s2);border-color:var(--s3);"><div class="text-sm"><strong class="text-s">If below 82% after 7 days, investigate:</strong> <span class="text-muted">OTP conversion funnel, gateway timeouts by geo, device-type breakdown (Android vs feature phone).</span></div></div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- =================== LIVE MONITORING =================== -->
+<div class="page" id="page-livemon">
+<div class="tabs" id="tabs-livemon">
+<button class="tab-btn active" onclick="showTab('livemon','lm-active')">Active Rollouts</button>
+<button class="tab-btn" onclick="showTab('livemon','lm-alerts')">Alerts</button>
+<button class="tab-btn" onclick="showTab('livemon','lm-gradual')">Gradual Rollout</button>
+</div>
+
+<div class="tab-content active" id="lm-active">
+<div class="g2">
+<div class="card card-accent">
+<div class="flex justify-between items-center mb8"><div class="card-title">Recharge Flow v2</div><span class="flash-dot"></span></div>
+<div class="card-sub mb8">Rollout: 20% &middot; Started 6h ago &middot; Platform Pod</div>
+<div class="progress-bar mb16"><div class="progress-fill" style="width:20%;"></div></div>
+<div class="flex gap16 text-sm">
+<div>Success Rate<br><strong class="text-p">&#9660; 85.2%</strong></div>
+<div>Avg Latency<br><strong class="text-s">&#9650; 240ms</strong></div>
+<div>Error Rate<br><strong class="text-p">&#9650; 2.1%</strong></div>
+</div>
+<div class="mt8"><span class="badge badge-alert">ALERT ACTIVE</span></div>
+</div>
+<div class="card card-accent-s">
+<div class="flex justify-between items-center mb8"><div class="card-title">Plan Comparison Page</div><span class="badge badge-s">Healthy</span></div>
+<div class="card-sub mb8">Rollout: 100% &middot; Deployed 3d ago &middot; App Pod</div>
+<div class="progress-bar mb16"><div class="progress-fill" style="width:100%;"></div></div>
+<div class="flex gap16 text-sm">
+<div>Plan Upgrades<br><strong class="text-s">&#9650; +14%</strong></div>
+<div>Page Views<br><strong class="text-s">&#9650; +32%</strong></div>
+<div>Bounce Rate<br><strong class="text-s">&#9660; -5%</strong></div>
+</div>
+</div>
+<div class="card card-accent-s">
+<div class="flex justify-between items-center mb8"><div class="card-title">OTP Revamp</div><span class="badge badge-s">Healthy</span></div>
+<div class="card-sub mb8">Rollout: 50% &middot; Started 2d ago &middot; Platform Pod</div>
+<div class="progress-bar mb16"><div class="progress-fill" style="width:50%;"></div></div>
+<div class="flex gap16 text-sm">
+<div>Login Success<br><strong class="text-s">&#9650; +9.4%</strong></div>
+<div>OTP Delivery<br><strong class="text-s">&#9650; 98.1%</strong></div>
+<div>Avg Time<br><strong class="text-s">&#9660; 12s</strong></div>
+</div>
+</div>
+<div class="card card-accent">
+<div class="flex justify-between items-center mb8"><div class="card-title">Installer App v3</div><span class="badge badge-progress">Rolling Out</span></div>
+<div class="card-sub mb8">Rollout: 35% &middot; Started 1d ago &middot; Field Ops Pod</div>
+<div class="progress-bar mb16"><div class="progress-fill" style="width:35%;"></div></div>
+<div class="flex gap16 text-sm">
+<div>Install Time<br><strong class="text-s">&#9660; -20%</strong></div>
+<div>Offline Sync<br><strong class="text-s">&#9650; 94%</strong></div>
+<div>Crashes<br><strong class="text-s">&#9660; 0.2%</strong></div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="tab-content" id="lm-alerts">
+<div class="alert-card mb16">
+<div class="alert-title"><span class="flash-dot"></span> ALERT: Recharge Success Rate Drop</div>
+<div class="alert-body">
+<strong>Recharge success rate dropped 8%</strong> since deployment 6 hours ago.<br>
+<strong>Geo:</strong> Delhi cluster (NCR region)<br>
+<strong>Correlated signal:</strong> Payment gateway timeout spike (+340% in Tier-2 cities)<br>
+<strong>Affected users:</strong> ~12,400 recharge attempts failed in last 2 hours<br><br>
+<strong>Suggested actions:</strong><br>
+1. Rollback recharge flow to v1 for Delhi cluster<br>
+2. Or: Deploy hotfix for gateway timeout handling<br>
+3. Escalate to payments pod for gateway provider SLA review
+</div>
+</div>
+<div class="section-title mt24"><span class="dot"></span> Alert History</div>
+<table class="tbl">
+<thead><tr><th>Time</th><th>Alert</th><th>Severity</th><th>Status</th></tr></thead>
+<tbody>
+<tr><td class="text-muted">Mar 18, 14:30</td><td>Recharge success rate -8% (Delhi)</td><td><span class="badge badge-high">Critical</span></td><td><span class="badge badge-p">Active</span></td></tr>
+<tr><td class="text-muted">Mar 17, 09:15</td><td>OTP delivery latency spike (>5s)</td><td><span class="badge badge-med">Warning</span></td><td><span class="badge badge-pending">Resolved</span></td></tr>
+<tr><td class="text-muted">Mar 16, 22:00</td><td>Plan page 500 errors (brief)</td><td><span class="badge badge-low">Info</span></td><td><span class="badge badge-pending">Resolved</span></td></tr>
+<tr><td class="text-muted">Mar 15, 11:45</td><td>Installer app crash rate >1%</td><td><span class="badge badge-med">Warning</span></td><td><span class="badge badge-pending">Resolved</span></td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="tab-content" id="lm-gradual">
+<div class="section-title"><span class="dot"></span> Gradual Rollout: Recharge Flow v2 (Currently at 20%)</div>
+<div class="g2">
+<div class="card">
+<div class="card-title mb16">Per-Cohort Performance</div>
+<div class="mb16">
+<div class="flex justify-between items-center mb8"><span class="text-sm fw700">Tier-1 Cities (Mumbai, Delhi, Bangalore)</span><span class="text-sm text-s">+7% success rate</span></div>
+<div class="bar-wrap" style="height:14px;"><div class="bar-fill bar-s" style="width:92%;"></div></div>
+<div class="text-xs text-muted mt8">92% success &middot; 4,200 transactions &middot; Avg latency 180ms</div>
+</div>
+<div class="mb16">
+<div class="flex justify-between items-center mb8"><span class="text-sm fw700">Tier-2 Cities (Lucknow, Jaipur, Indore)</span><span class="text-sm text-p">-1% success rate</span></div>
+<div class="bar-wrap" style="height:14px;"><div class="bar-fill bar-p" style="width:84%;"></div></div>
+<div class="text-xs text-muted mt8">84% success &middot; 2,800 transactions &middot; Avg latency 420ms</div>
+</div>
+<div class="mb16">
+<div class="flex justify-between items-center mb8"><span class="text-sm fw700">Tier-3 Cities (Varanasi, Patna)</span><span class="text-sm text-p">-4% success rate</span></div>
+<div class="bar-wrap" style="height:14px;"><div class="bar-fill bar-p" style="width:78%;"></div></div>
+<div class="text-xs text-muted mt8">78% success &middot; 1,100 transactions &middot; Avg latency 680ms</div>
+</div>
+</div>
+<div class="card" style="background:var(--s2);border-color:var(--s3);">
+<div class="card-title text-s">Pulse Recommendation</div>
+<div class="mt8 text-sm" style="line-height:1.8;">
+<strong>Expand Tier-1 to 50%</strong> &#8212; Strong performance across all metrics.<br>
+<strong>Hold Tier-2 at 20%</strong> &#8212; Gateway latency causing drop-offs. Await payments pod fix.<br>
+<strong>Pause Tier-3</strong> &#8212; Investigate network latency contribution before expanding.<br><br>
+<em class="text-muted">Estimated full rollout: Mar 25 (if Tier-2 fix deployed by Mar 20)</em>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- =================== IMPACT ANALYSIS =================== -->
+<div class="page" id="page-impact">
+<div class="tabs" id="tabs-impact">
+<button class="tab-btn active" onclick="showTab('impact','ia-working')">What's Working</button>
+<button class="tab-btn" onclick="showTab('impact','ia-not')">What's Not Working</button>
+<button class="tab-btn" onclick="showTab('impact','ia-funnel')">Adoption Funnel</button>
+<button class="tab-btn" onclick="showTab('impact','ia-cannibal')">Cannibalization</button>
+<button class="tab-btn" onclick="showTab('impact','ia-external')">External Factors</button>
+<button class="tab-btn" onclick="showTab('impact','ia-feedback')">User Feedback</button>
+</div>
+
+<div class="tab-content active" id="ia-working">
+<div class="g2">
+<div class="card card-accent-s">
+<div class="card-title">Self-Service Plan Change</div>
+<div class="flex gap16 mt8 mb16 text-sm">
+<div>Plan Upgrades <strong class="text-s">+14%</strong></div>
+<div>Persona: <strong>Home User</strong></div>
+</div>
+<div class="text-xs text-muted mb8">Geo Breakdown</div>
+<div class="flex items-center gap8 mb8"><span class="text-xs" style="width:100px;">Maharashtra</span><div class="bar-wrap" style="flex:1;"><div class="bar-fill bar-s" style="width:88%;"></div></div><span class="text-xs text-s">+22%</span></div>
+<div class="flex items-center gap8 mb8"><span class="text-xs" style="width:100px;">Karnataka</span><div class="bar-wrap" style="flex:1;"><div class="bar-fill bar-s" style="width:72%;"></div></div><span class="text-xs text-s">+16%</span></div>
+<div class="flex items-center gap8 mb8"><span class="text-xs" style="width:100px;">Delhi NCR</span><div class="bar-wrap" style="flex:1;"><div class="bar-fill bar-s" style="width:60%;"></div></div><span class="text-xs text-s">+12%</span></div>
+<div class="flex items-center gap8 mb8"><span class="text-xs" style="width:100px;">Tamil Nadu</span><div class="bar-wrap" style="flex:1;"><div class="bar-fill bar-s" style="width:45%;"></div></div><span class="text-xs text-s">+8%</span></div>
+</div>
+<div class="card card-accent-s">
+<div class="card-title">OTP Revamp</div>
+<div class="flex gap16 mt8 mb16 text-sm">
+<div>Login Success <strong class="text-s">+9.4%</strong></div>
+<div>Persona: <strong>All Users</strong></div>
+</div>
+<div class="text-xs text-muted mb8">Geo Breakdown</div>
+<div class="flex items-center gap8 mb8"><span class="text-xs" style="width:100px;">National</span><div class="bar-wrap" style="flex:1;"><div class="bar-fill bar-s" style="width:76%;"></div></div><span class="text-xs text-s">+9.4%</span></div>
+<div class="flex items-center gap8 mb8"><span class="text-xs" style="width:100px;">UP East</span><div class="bar-wrap" style="flex:1;"><div class="bar-fill bar-s" style="width:90%;"></div></div><span class="text-xs text-s">+14%</span></div>
+<div class="flex items-center gap8 mb8"><span class="text-xs" style="width:100px;">Bihar</span><div class="bar-wrap" style="flex:1;"><div class="bar-fill bar-s" style="width:82%;"></div></div><span class="text-xs text-s">+11%</span></div>
+</div>
+<div class="card card-accent-s">
+<div class="card-title">Installer App v3 &#8212; Offline Mode</div>
+<div class="flex gap16 mt8 mb16 text-sm">
+<div>Install Time <strong class="text-s">-20%</strong></div>
+<div>Persona: <strong>Field Technician</strong></div>
+</div>
+<div class="text-xs text-muted mb8">Geo Breakdown</div>
+<div class="flex items-center gap8 mb8"><span class="text-xs" style="width:100px;">Rural Areas</span><div class="bar-wrap" style="flex:1;"><div class="bar-fill bar-s" style="width:95%;"></div></div><span class="text-xs text-s">+28%</span></div>
+<div class="flex items-center gap8 mb8"><span class="text-xs" style="width:100px;">Semi-Urban</span><div class="bar-wrap" style="flex:1;"><div class="bar-fill bar-s" style="width:65%;"></div></div><span class="text-xs text-s">+15%</span></div>
+</div>
+</div>
+</div>
+
+<div class="tab-content" id="ia-not">
+<div class="g2">
+<div class="card card-accent">
+<div class="card-title">Recharge Flow v2</div>
+<div class="text-sm text-p mb16">Success Rate <strong>-3%</strong> &middot; Persona: Home User, Small Business</div>
+<div class="text-xs text-muted mb8">Root Cause Breakdown</div>
+<div class="mb8"><div class="flex justify-between text-xs mb8"><span>OTP step drop-off</span><span class="text-p">60%</span></div><div class="bar-wrap"><div class="bar-fill bar-p" style="width:60%;"></div></div></div>
+<div class="mb8"><div class="flex justify-between text-xs mb8"><span>Gateway timeout (Tier-2)</span><span class="text-p">30%</span></div><div class="bar-wrap"><div class="bar-fill bar-p" style="width:30%;"></div></div></div>
+<div class="mb8"><div class="flex justify-between text-xs mb8"><span>Unknown</span><span class="text-muted">10%</span></div><div class="bar-wrap"><div class="bar-fill" style="width:10%;background:var(--bg5);"></div></div></div>
+<div class="mt8 text-xs"><strong class="text-p">Geo Hotspot:</strong> <span class="text-muted">UP East, Delhi NCR &#8212; correlated with Tier-2 gateway issues</span></div>
+</div>
+<div class="card card-accent">
+<div class="card-title">Onboarding Welcome Screen</div>
+<div class="text-sm text-p mb16">Completion Rate <strong>-5%</strong> &middot; Persona: New User</div>
+<div class="text-xs text-muted mb8">Root Cause Breakdown</div>
+<div class="mb8"><div class="flex justify-between text-xs mb8"><span>Screen too long on mobile</span><span class="text-p">45%</span></div><div class="bar-wrap"><div class="bar-fill bar-p" style="width:45%;"></div></div></div>
+<div class="mb8"><div class="flex justify-between text-xs mb8"><span>KYC upload confusion</span><span class="text-p">35%</span></div><div class="bar-wrap"><div class="bar-fill bar-p" style="width:35%;"></div></div></div>
+<div class="mb8"><div class="flex justify-between text-xs mb8"><span>Language mismatch</span><span class="text-muted">20%</span></div><div class="bar-wrap"><div class="bar-fill bar-p" style="width:20%;"></div></div></div>
+</div>
+</div>
+</div>
+
+<div class="tab-content" id="ia-funnel">
+<div class="section-title"><span class="dot"></span> Adoption Funnel: Recharge Flow v2</div>
+<div style="max-width:500px;margin:0 auto;">
+<div class="funnel">
+<div class="funnel-step" style="width:100%;background:var(--p);border-radius:8px 8px 0 0;">Exposed &#8212; 80% (24,000 users)</div>
+<div class="funnel-step" style="width:75%;background:var(--p4);">Discovered &#8212; 12% (3,600 users)</div>
+<div class="funnel-step" style="width:50%;background:var(--p3);position:relative;">
+Engaged &#8212; 6% (1,800 users)
+<div style="position:absolute;right:-180px;top:50%;transform:translateY(-50%);background:rgba(229,161,0,.1);border:1px solid rgba(229,161,0,.25);border-radius:6px;padding:6px 12px;font-size:11px;color:var(--amber);white-space:nowrap;">&#9668; Bottleneck: Discovery problem</div>
+</div>
+<div class="funnel-step" style="width:30%;background:var(--p2);border-radius:0 0 8px 8px;">Converted &#8212; 3% (900 users)</div>
+</div>
+<div class="card mt24" style="background:var(--s2);border-color:var(--s3);">
+<div class="card-title text-s">Pulse Suggestion</div>
+<div class="text-sm text-muted mt8" style="line-height:1.7;">The 80% to 12% drop indicates a <strong>discovery problem</strong>. The recharge flow entry point is buried in the hamburger menu. Recommended: Add prominent CTA on home screen and post-login landing page. Similar pattern was resolved in Nov '25 by adding quick-action tiles (+18% discovery).</div>
+</div>
+</div>
+</div>
+
+<div class="tab-content" id="ia-cannibal">
+<div class="section-title"><span class="dot"></span> Cannibalization Detection</div>
+<div class="card" style="border-color:var(--s3);background:linear-gradient(135deg,var(--s2),transparent);">
+<div class="card-title" style="color:var(--red);">Correlated Metric Movement Detected</div>
+<div class="text-sm text-muted mt8 mb16">Since Recharge Flow v2 launch, plan upgrade rate has declined proportionally.</div>
+<div class="line-chart">
+<svg viewBox="0 0 400 120" preserveAspectRatio="none">
+<path d="M0,80 C50,78 100,70 150,50 200,35 250,30 300,25 350,22 400,20" stroke="var(--s)" stroke-width="2.5" fill="none"/>
+<path d="M0,40 C50,42 100,50 150,65 200,72 250,78 300,85 350,88 400,92" stroke="var(--p)" stroke-width="2.5" fill="none"/>
+<text x="10" y="35" fill="var(--s-text)" font-size="10" font-family="Noto Sans">Recharge Attempts</text>
+<text x="10" y="95" fill="var(--p)" font-size="10" font-family="Noto Sans">Plan Upgrades</text>
+<line x1="0" y1="110" x2="400" y2="110" stroke="var(--bg4)" stroke-width="1"/>
+<text x="0" y="118" fill="var(--tx3)" font-size="8" font-family="Noto Sans">Mar 10</text>
+<text x="180" y="118" fill="var(--tx3)" font-size="8" font-family="Noto Sans">Mar 14</text>
+<text x="370" y="118" fill="var(--tx3)" font-size="8" font-family="Noto Sans">Mar 18</text>
+</svg>
+</div>
+<div class="mt12 text-sm"><strong class="text-p">Plan upgrade rate -6%</strong> <span class="text-muted">since recharge flow launch. Users who previously upgraded are now recharging existing plans instead.</span></div>
+</div>
+<div class="card mt16" style="background:var(--s2);border-color:var(--s3);">
+<div class="card-title text-s">Pulse Suggestion</div>
+<div class="text-sm text-muted mt8">Add a <strong>plan nudge post-recharge confirmation</strong>: "You could save 18% with the 6-month plan." This captures intent at the highest-engagement moment without disrupting recharge flow.</div>
+</div>
+</div>
+
+<div class="tab-content" id="ia-external">
+<div class="section-title"><span class="dot"></span> External Factor Adjustment</div>
+<div class="timeline mb24">
+<div class="timeline-item"><div class="timeline-date">Mar 10 &#8212; IPL Season Start</div><div class="timeline-text">Baseline traffic increase +15% nationally. Streaming plan interest surge.</div></div>
+<div class="timeline-item"><div class="timeline-date">Mar 14 &#8212; Network Outage (Jio)</div><div class="timeline-text">Competitor outage drove 8% new user signups in Maharashtra. Not attributable to product changes.</div></div>
+<div class="timeline-item"><div class="timeline-date">Mar 16 &#8212; Weekend Effect</div><div class="timeline-text">Standard weekend traffic dip -12%. Adjusted in calculations.</div></div>
+</div>
+<div class="card">
+<div class="card-title">Recharge Flow v2 &#8212; Adjusted Attribution</div>
+<div class="g2 mt16">
+<div>
+<div class="text-xs text-muted mb8">Raw Metric Change</div>
+<div class="flex items-center gap8 mb8"><span class="text-xs" style="width:80px;">Recharge &#9650;</span><div class="bar-wrap" style="flex:1;"><div class="bar-fill bar-s" style="width:80%;"></div></div><span class="text-xs text-s">+20%</span></div>
+</div>
+<div>
+<div class="text-xs text-muted mb8">After External Adjustment</div>
+<div class="flex items-center gap8 mb8"><span class="text-xs" style="width:80px;">IPL baseline</span><div class="bar-wrap" style="flex:1;"><div class="bar-fill" style="width:60%;background:var(--bg5);"></div></div><span class="text-xs text-muted">+15%</span></div>
+<div class="flex items-center gap8 mb8"><span class="text-xs" style="width:80px;">Attributable</span><div class="bar-wrap" style="flex:1;"><div class="bar-fill bar-p" style="width:20%;"></div></div><span class="text-xs text-p">~5%</span></div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="tab-content" id="ia-feedback">
+<div class="section-title"><span class="dot"></span> User Feedback Signals</div>
+<div class="g2">
+<div class="card" style="border-left:3px solid var(--s);">
+<div class="text-xs text-s fw700 mb8">POSITIVE &#8212; Play Store Reviews (14 mentions)</div>
+<div style="border-left:3px solid var(--s3);padding:10px 14px;margin-bottom:10px;background:var(--s2);border-radius:0 8px 8px 0;">
+<div class="text-sm" style="font-style:italic;color:var(--tx2);">"Setup was so easy, the installer came and everything was done in 20 minutes. Love the new app!"</div>
+<div class="text-xs text-muted mt8">&#8212; Play Store, Mar 16 &middot; Linked: Installer App v3</div>
+</div>
+<div style="border-left:3px solid var(--s3);padding:10px 14px;background:var(--s2);border-radius:0 8px 8px 0;">
+<div class="text-sm" style="font-style:italic;color:var(--tx2);">"Finally can compare plans properly. Switched to the annual plan and saving money now."</div>
+<div class="text-xs text-muted mt8">&#8212; Play Store, Mar 17 &middot; Linked: Plan Comparison Page</div>
+</div>
+</div>
+<div class="card" style="border-left:3px solid var(--p);">
+<div class="text-xs text-p fw700 mb8">NEGATIVE &#8212; Support Tickets (8 mentions)</div>
+<div style="border-left:3px solid var(--p3);padding:10px 14px;margin-bottom:10px;background:var(--p2);border-radius:0 8px 8px 0;">
+<div class="text-sm" style="font-style:italic;color:var(--tx2);">"OTP not received for recharge. Tried 3 times. Had to call support to recharge my plan."</div>
+<div class="text-xs text-muted mt8">&#8212; Support Ticket #4892, Mar 17 &middot; Linked: Recharge Flow v2</div>
+</div>
+<div style="border-left:3px solid var(--p3);padding:10px 14px;background:var(--p2);border-radius:0 8px 8px 0;">
+<div class="text-sm" style="font-style:italic;color:var(--tx2);">"Payment failed twice on recharge. Amount debited but plan not activated."</div>
+<div class="text-xs text-muted mt8">&#8212; Support Ticket #4901, Mar 18 &middot; Linked: Recharge Flow v2</div>
+</div>
+</div>
+</div>
+<div class="card mt16">
+<div class="card-title">NPS Verbatim Highlights</div>
+<div class="text-sm text-muted mt8">NPS Score this week: <strong class="text-s">42</strong> (up from 38). Top driver: Installer experience. Top detractor: Recharge payment issues.</div>
+</div>
+</div>
+</div>
+
+<!-- =================== LEARNING LOOP =================== -->
+<div class="page" id="page-learning">
+<div class="tabs" id="tabs-learning">
+<button class="tab-btn active" onclick="showTab('learning','ll-pri')">Auto-Prioritization</button>
+<button class="tab-btn" onclick="showTab('learning','ll-kb')">Release Knowledge Base</button>
+<button class="tab-btn" onclick="showTab('learning','ll-cost')">Cost-Impact Ratio</button>
+</div>
+
+<div class="tab-content active" id="ll-pri">
+<div class="section-title"><span class="dot"></span> AI-Ranked Sprint Priorities</div>
+<div class="pri-item" style="border-left:3px solid var(--p);">
+<div class="pri-drag">&#9776;</div>
+<div class="pri-rank" style="background:var(--p2);color:var(--p);">1</div>
+<div class="pri-body">
+<div class="text-sm fw700"><span class="badge badge-high" style="margin-right:6px;">FIX</span> Recharge OTP Drop-off</div>
+<div class="text-xs text-muted mt8">Impact Score: <strong class="text-p">92</strong> &middot; Metric gap (8%) x Users affected (40% DAU) x Strategic weight (Revenue) = 92</div>
+</div>
+<div class="pri-actions"><button class="pri-btn">Accept</button><button class="pri-btn">Modify</button><button class="pri-btn">Override</button></div>
+</div>
+<div class="pri-item" style="border-left:3px solid var(--s);">
+<div class="pri-drag">&#9776;</div>
+<div class="pri-rank" style="background:var(--s2);color:var(--s-text);">2</div>
+<div class="pri-body">
+<div class="text-sm fw700"><span class="badge badge-s" style="margin-right:6px;">EXPAND</span> Plan Comparison to Tier-2</div>
+<div class="text-xs text-muted mt8">Impact Score: <strong class="text-s">78</strong> &middot; Metric gap (14% Tier-1 only) x Addressable users (Tier-2 35% base) x Strategic weight (Growth) = 78</div>
+</div>
+<div class="pri-actions"><button class="pri-btn">Accept</button><button class="pri-btn">Modify</button><button class="pri-btn">Override</button></div>
+</div>
+<div class="pri-item" style="border-left:3px solid var(--s);">
+<div class="pri-drag">&#9776;</div>
+<div class="pri-rank" style="background:var(--s2);color:var(--s-text);">3</div>
+<div class="pri-body">
+<div class="text-sm fw700"><span class="badge badge-s" style="margin-right:6px;">NEW</span> Post-Recharge Plan Nudge</div>
+<div class="text-xs text-muted mt8">Impact Score: <strong class="text-s">67</strong> &middot; Cannibalization gap (6%) x Recharge volume (high) x Strategic weight (ARPU) = 67</div>
+</div>
+<div class="pri-actions"><button class="pri-btn">Accept</button><button class="pri-btn">Modify</button><button class="pri-btn">Override</button></div>
+</div>
+<div class="pri-item" style="border-left:3px solid var(--bg5);">
+<div class="pri-drag">&#9776;</div>
+<div class="pri-rank" style="background:var(--bg4);color:var(--tx3);">4</div>
+<div class="pri-body">
+<div class="text-sm fw700" style="opacity:.6;"><span class="badge badge-low" style="margin-right:6px;">DEPRIORITIZE</span> Dashboard Redesign</div>
+<div class="text-xs text-muted mt8">Impact Score: <strong class="text-muted">31</strong> &middot; Engagement already trending up (+8% WoW) x Low user complaints x Strategic weight (Low) = 31</div>
+</div>
+<div class="pri-actions"><button class="pri-btn">Accept</button><button class="pri-btn">Modify</button><button class="pri-btn">Override</button></div>
+</div>
+</div>
+
+<div class="tab-content" id="ll-kb">
+<div class="section-title"><span class="dot"></span> Release Knowledge Base</div>
+<input type="text" class="search-bar" id="kbSearch" placeholder="Search releases... (e.g., recharge, OTP, plan)" oninput="filterKB()">
+<div id="kbList">
+<div class="expandable kb-item" data-search="recharge flow v1 november 2025">
+<div class="expandable-header" onclick="toggleExpand(this)"><span class="text-sm fw700">Recharge Flow v1 &#8212; Nov 2025</span><span class="expandable-chevron">&#9660;</span></div>
+<div class="expandable-body"><div class="text-sm text-muted" style="line-height:1.8;"><strong>What shipped:</strong> First UPI-based recharge with saved payment methods.<br><strong>Expected:</strong> +15% success rate<br><strong>Actual:</strong> +8% success rate (missed target)<br><strong>Learnings:</strong> Feature phone users struggled with UPI deep-link. Need fallback for non-UPI devices.<br><strong>Follow-up:</strong> Added SMS-based recharge fallback (shipped Dec '25).</div></div>
+</div>
+<div class="expandable kb-item" data-search="otp revamp march 2026 login authentication">
+<div class="expandable-header" onclick="toggleExpand(this)"><span class="text-sm fw700">OTP Revamp &#8212; Mar 2026</span><span class="expandable-chevron">&#9660;</span></div>
+<div class="expandable-body"><div class="text-sm text-muted" style="line-height:1.8;"><strong>What shipped:</strong> WhatsApp OTP + auto-read fallback for SMS OTP.<br><strong>Expected:</strong> +5% login success<br><strong>Actual:</strong> +9.4% login success (exceeded target)<br><strong>Learnings:</strong> WhatsApp OTP delivery is 3x faster than SMS in Tier-2/3. Auto-read reduced friction significantly.<br><strong>Follow-up:</strong> Evaluate extending WhatsApp OTP to recharge flow.</div></div>
+</div>
+<div class="expandable kb-item" data-search="plan comparison page february 2026 upgrade">
+<div class="expandable-header" onclick="toggleExpand(this)"><span class="text-sm fw700">Plan Comparison Page &#8212; Feb 2026</span><span class="expandable-chevron">&#9660;</span></div>
+<div class="expandable-body"><div class="text-sm text-muted" style="line-height:1.8;"><strong>What shipped:</strong> Side-by-side plan comparison with savings calculator.<br><strong>Expected:</strong> +8% plan upgrades<br><strong>Actual:</strong> +14% plan upgrades (exceeded target by 75%)<br><strong>Learnings:</strong> Savings calculator was the top-engaged element. Users spend 2.3x more time on page when calculator is used.<br><strong>Follow-up:</strong> Expand to Tier-2 cities. Add annual vs monthly comparison.</div></div>
+</div>
+<div class="expandable kb-item" data-search="installer app v2 january 2026 field ops technician">
+<div class="expandable-header" onclick="toggleExpand(this)"><span class="text-sm fw700">Installer App v2 &#8212; Jan 2026</span><span class="expandable-chevron">&#9660;</span></div>
+<div class="expandable-body"><div class="text-sm text-muted" style="line-height:1.8;"><strong>What shipped:</strong> Photo-based installation verification and GPS tagging.<br><strong>Expected:</strong> -15% revisit rate<br><strong>Actual:</strong> -22% revisit rate (exceeded target)<br><strong>Learnings:</strong> GPS tagging helped identify repeat visit clusters &#8212; 3 areas in Mumbai accounted for 40% of revisits due to building access issues.<br><strong>Follow-up:</strong> Add pre-installation access check in scheduling flow.</div></div>
+</div>
+<div class="expandable kb-item" data-search="onboarding flow december 2025 new user activation">
+<div class="expandable-header" onclick="toggleExpand(this)"><span class="text-sm fw700">Onboarding Flow v1 &#8212; Dec 2025</span><span class="expandable-chevron">&#9660;</span></div>
+<div class="expandable-body"><div class="text-sm text-muted" style="line-height:1.8;"><strong>What shipped:</strong> Guided onboarding with plan recommendation quiz.<br><strong>Expected:</strong> +10% activation rate<br><strong>Actual:</strong> +6% activation rate (below target)<br><strong>Learnings:</strong> Quiz was too long (8 questions). Users dropped off at question 5. Shortened to 4 questions in hotfix &#8212; activation improved to +9%.<br><strong>Follow-up:</strong> Onboarding Wizard v2 planned for Mar 2026.</div></div>
+</div>
+<div class="expandable kb-item" data-search="network speed test widget october 2025 usage data">
+<div class="expandable-header" onclick="toggleExpand(this)"><span class="text-sm fw700">Speed Test Widget &#8212; Oct 2025</span><span class="expandable-chevron">&#9660;</span></div>
+<div class="expandable-body"><div class="text-sm text-muted" style="line-height:1.8;"><strong>What shipped:</strong> In-app speed test with historical graph.<br><strong>Expected:</strong> Reduce speed-related support tickets by 20%<br><strong>Actual:</strong> Reduced by 28% (exceeded target)<br><strong>Learnings:</strong> Users who ran speed test before calling support had 40% lower call duration. Self-service resolution improved.<br><strong>Follow-up:</strong> Add network health recommendations based on speed test results.</div></div>
+</div>
+</div>
+</div>
+
+<div class="tab-content" id="ll-cost">
+<div class="section-title"><span class="dot"></span> Cost-Impact Efficiency</div>
+<table class="tbl mb24">
+<thead><tr><th>Feature</th><th>Story Points</th><th>Metric Impact</th><th>Efficiency Score</th></tr></thead>
+<tbody>
+<tr><td>Plan Comparison Page</td><td>13</td><td>+14% upgrades</td><td><strong class="text-s">1.08</strong></td></tr>
+<tr><td>OTP Revamp</td><td>21</td><td>+9.4% login</td><td><strong class="text-s">0.45</strong></td></tr>
+<tr><td>Speed Test Widget</td><td>8</td><td>-28% tickets</td><td><strong class="text-s">3.50</strong></td></tr>
+<tr><td>Recharge Flow v2</td><td>34</td><td>-3% success</td><td><strong class="text-p">-0.09</strong></td></tr>
+<tr><td>Onboarding Flow</td><td>21</td><td>+6% activation</td><td><strong class="text-s">0.29</strong></td></tr>
+</tbody>
+</table>
+<div class="section-title"><span class="dot"></span> Efficiency Comparison</div>
+<div class="card mb24">
+<div class="mb8"><div class="flex justify-between text-xs mb8"><span>Speed Test Widget</span><span class="text-s">3.50</span></div><div class="bar-wrap"><div class="bar-fill bar-s" style="width:100%;"></div></div></div>
+<div class="mb8"><div class="flex justify-between text-xs mb8"><span>Plan Comparison Page</span><span class="text-s">1.08</span></div><div class="bar-wrap"><div class="bar-fill bar-s" style="width:31%;"></div></div></div>
+<div class="mb8"><div class="flex justify-between text-xs mb8"><span>OTP Revamp</span><span class="text-s">0.45</span></div><div class="bar-wrap"><div class="bar-fill bar-s" style="width:13%;"></div></div></div>
+<div class="mb8"><div class="flex justify-between text-xs mb8"><span>Onboarding Flow</span><span class="text-s">0.29</span></div><div class="bar-wrap"><div class="bar-fill bar-s" style="width:8%;"></div></div></div>
+<div class="mb8"><div class="flex justify-between text-xs mb8"><span>Recharge Flow v2</span><span class="text-p">-0.09</span></div><div class="bar-wrap"><div class="bar-fill bar-p" style="width:5%;"></div></div></div>
+</div>
+<div class="card" style="border-color:var(--s3);">
+<div class="card-title text-s">Velocity Insight</div>
+<div class="text-sm text-muted mt8" style="line-height:1.8;"><strong>Platform Pod</strong> cycle time: 8 &#8594; 14 days <span class="text-p">&#9650;</span><br>Bottleneck: Dependency wait time averaging <strong>4.5 days</strong> (56% of increase).<br>Root cause: Cross-pod API tickets created late in sprint. Recommendation: Mandate dependency tickets in sprint planning.</div>
+</div>
+</div>
+</div>
+
+<!-- =================== CHANNELS =================== -->
+<div class="page" id="page-channels">
+<div class="section-title"><span class="dot"></span> Distribution Channels &#8212; How Pulse Reaches Stakeholders</div>
+<div class="g2 mb24">
+<!-- WhatsApp -->
+<div class="card">
+<div class="card-title mb16">WhatsApp Preview</div>
+<div class="phone-frame">
+<div class="phone-notch"></div>
+<div class="phone-screen">
+<div style="background:#075e54;padding:12px 16px;color:white;font-size:14px;font-weight:700;">Wiom Pulse</div>
+<div style="flex:1;background:#e5ddd5;padding:12px;">
+<div style="font-size:10px;color:rgba(0,0,0,.4);text-align:center;margin-bottom:12px;">Today, 9:00 AM</div>
+<div class="wa-msg-anim" style="background:#005c4b;border-radius:0 8px 8px 8px;padding:10px 12px;margin-bottom:8px;max-width:85%;font-size:12px;color:#e9edef;line-height:1.6;">
+Good morning! This week at a glance:<br><br>
+<strong>7 features shipped</strong><br>
+&#8226; Recharge success <strong>+5%</strong><br>
+&#8226; Plan upgrades <strong>+14%</strong><br>
+&#8226; Login success <strong>+9.4%</strong><br><br>
+1 alert: OTP drop-off needs attention<br><br>
+Tap for full report &#8594;
+<div style="font-size:10px;color:rgba(255,255,255,.4);text-align:right;margin-top:4px;">9:00 AM &#10003;&#10003;</div>
+</div>
+<div class="wa-msg-anim" style="background:var(--bg4);border-radius:8px;padding:6px 10px;display:inline-block;font-size:10px;color:var(--tx3);margin-top:4px;">For: Support Team</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Email -->
+<div class="card">
+<div class="card-title mb16">Email Preview</div>
+<div class="email-mock">
+<div class="email-brand-bar"></div>
+<div class="email-header">
+<div><strong>From:</strong> Wiom Pulse &lt;pulse@wiom.in&gt;</div>
+<div><strong>To:</strong> leadership@wiom.in</div>
+<div><strong>Subject:</strong> Wiom Pulse Weekly &#8212; Mar 17, 2026</div>
+</div>
+<div class="email-body email-body-anim">
+<div style="text-align:center;padding:12px;border-bottom:1px solid var(--bg4);">
+<span style="font-size:18px;font-weight:700;color:var(--p);">&#8734; Wiom Pulse</span><br>
+<span class="text-xs text-muted">Weekly Release Intelligence Report</span>
+</div>
+<div style="padding:12px 0;">
+<strong>Top 3 Releases This Week:</strong>
+<table style="width:100%;margin-top:8px;font-size:12px;" cellpadding="6">
+<tr style="border-bottom:1px solid var(--bg4);"><td>Plan Comparison</td><td class="text-s">+14%</td><td>upgrades</td></tr>
+<tr style="border-bottom:1px solid var(--bg4);"><td>OTP Revamp</td><td class="text-s">+9.4%</td><td>login success</td></tr>
+<tr><td>Installer App v3</td><td class="text-s">-20%</td><td>install time</td></tr>
+</table>
+</div>
+<div style="padding:8px 12px;background:var(--p2);border-radius:6px;font-size:12px;"><strong class="text-p">Action Required:</strong> Recharge OTP drop-off needs sprint attention.</div>
+</div>
+</div>
+</div>
+</div>
+<div class="g3">
+<!-- Slack -->
+<div class="card">
+<div class="card-title mb16">Slack Preview</div>
+<div class="slack-mock">
+<div class="slack-header"># wiom-pulse</div>
+<div class="slack-msg slack-msg-anim">
+<div class="slack-msg-av"></div>
+<div>
+<div class="slack-msg-name">Wiom Pulse <span class="text-xs text-muted" style="font-weight:400;">APP 9:00 AM</span></div>
+<div class="slack-msg-body">
+<strong>Weekly Digest &#8212; Sprint 24</strong><br>
+&#9632; <strong>7</strong> features shipped | Impact: <strong>+4.2%</strong><br>
+&#9632; Top win: Plan Comparison (+14% upgrades)<br>
+&#9632; Alert: Recharge OTP drop-off (-3%)<br>
+<span style="color:var(--p);font-size:11px;cursor:pointer;">View full report &#8594;</span>
+</div>
+</div>
+</div>
+<div class="slack-msg-anim" style="padding:4px 16px 4px 54px;font-size:11px;color:var(--tx3);border-top:1px solid var(--bg4);">
+<span style="color:var(--s-text);">2 replies</span>
+</div>
+<div class="slack-msg slack-msg-anim" style="padding-left:54px;opacity:.7;">
+<div style="width:22px;height:22px;border-radius:4px;background:var(--bg5);flex-shrink:0;"></div>
+<div><div class="slack-msg-name" style="font-size:11px;">Priya S. <span class="text-muted" style="font-weight:400;">9:15 AM</span></div><div class="slack-msg-body" style="font-size:11px;">Looking into the OTP drop-off. Will update by EOD.</div></div>
+</div>
+</div>
+</div>
+<!-- Mobile Widget -->
+<div class="card">
+<div class="card-title mb16">Mobile Widget Preview</div>
+<div style="display:flex;justify-content:center;padding:20px;">
+<div style="width:200px;background:var(--bg);border-radius:20px;padding:30px 16px;border:1px solid var(--bg4);">
+<div style="display:flex;gap:8px;margin-bottom:16px;">
+<div style="width:40px;height:40px;border-radius:10px;background:var(--bg4);"></div>
+<div style="width:40px;height:40px;border-radius:10px;background:var(--bg4);"></div>
+<div style="width:40px;height:40px;border-radius:10px;background:var(--bg4);"></div>
+<div style="width:40px;height:40px;border-radius:10px;background:var(--bg4);"></div>
+</div>
+<div class="widget-card" style="width:100%;">
+<div style="font-size:10px;font-weight:700;color:var(--p);margin-bottom:6px;">&#8734; Wiom Pulse</div>
+<div style="display:flex;justify-content:space-between;font-size:16px;font-weight:700;color:var(--tx);">
+<span>3 shipped</span>
+<span class="text-s">+4.2%</span>
+<span class="text-p">1 alert</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Dashboard -->
+<div class="card">
+<div class="card-title mb16">Dashboard Preview</div>
+<div style="display:flex;justify-content:center;padding:20px;">
+<div style="width:200px;height:130px;background:var(--bg);border:1px solid var(--bg4);border-radius:8px;overflow:hidden;position:relative;">
+<div style="height:20px;background:var(--bg2);border-bottom:1px solid var(--bg4);display:flex;align-items:center;padding:0 8px;">
+<span style="font-size:6px;color:var(--p);">&#8734; Wiom Pulse</span>
+</div>
+<div style="display:flex;height:calc(100% - 20px);">
+<div style="width:30px;background:var(--bg2);border-right:1px solid var(--bg4);"></div>
+<div style="flex:1;padding:4px;">
+<div style="display:flex;gap:3px;margin-bottom:4px;">
+<div style="flex:1;height:16px;background:var(--bg3);border-radius:2px;"></div>
+<div style="flex:1;height:16px;background:var(--bg3);border-radius:2px;"></div>
+<div style="flex:1;height:16px;background:var(--bg3);border-radius:2px;"></div>
+</div>
+<div style="height:40px;background:var(--bg3);border-radius:2px;margin-bottom:3px;"></div>
+<div style="height:25px;background:var(--bg3);border-radius:2px;"></div>
+</div>
+</div>
+</div>
+</div>
+<div style="text-align:center;font-size:12px;color:var(--tx3);margin-top:8px;">You're looking at it right now!</div>
+</div>
+</div>
+</div>
+
+<!-- =================== ASK PULSE =================== -->
+<div class="page" id="page-askpulse">
+<div class="chat-wrap">
+<div class="chat-messages" id="chatMessages">
+<div class="chat-msg user"><div class="chat-avatar">YG</div><div class="chat-bubble">What shipped last week that affects support?</div></div>
+<div class="chat-msg bot"><div class="chat-avatar">&#8734;</div><div class="chat-bubble">3 releases impact your team this week:<br><br><strong>1. OTP Revamp</strong> &#8212; Login success +9.4%. Expect fewer auth-related tickets.<br><br><strong>2. Recharge Flow v2</strong> &#8212; Success rate dipped 3%. Watch for increased recharge complaints, especially from UP East.<br><br><strong>3. Plan Comparison Page</strong> &#8212; Upgrades up 14%. You may see questions about plan differences.</div></div>
+<div class="chat-msg user"><div class="chat-avatar">YG</div><div class="chat-bubble">Why did recharge success drop?</div></div>
+<div class="chat-msg bot"><div class="chat-avatar">&#8734;</div><div class="chat-bubble">Recharge success dropped 3% due to:<br><br><strong>OTP step abandonment</strong> (60% contribution) &#8212; Users dropping off at OTP verification step.<br><br><strong>Payment gateway timeouts in Tier-2 cities</strong> (30% contribution) &#8212; Provider latency issue affecting Lucknow, Jaipur, Indore clusters.<br><br><strong>Remaining 10%</strong> &#8212; Under investigation.<br><br><em>Recommended actions:</em><br>1. Simplify OTP step UX<br>2. Escalate gateway issue to payments pod</div></div>
+<div class="chat-msg user"><div class="chat-avatar">YG</div><div class="chat-bubble">What should we prioritize next sprint?</div></div>
+<div class="chat-msg bot"><div class="chat-avatar">&#8734;</div><div class="chat-bubble">Based on impact analysis, recommended priorities:<br><br><strong>1. [FIX] Recharge OTP drop-off</strong> (Score: 92) &#8212; Affects 40% of recharge attempts.<br><br><strong>2. [EXPAND] Plan comparison to Tier-2</strong> (Score: 78) &#8212; Proven in Tier-1, high ARPU potential.<br><br><strong>3. [NEW] Post-recharge plan nudge</strong> (Score: 67) &#8212; Addresses cannibalization signal.<br><br><strong>4. [DEPRIORITIZE] Dashboard redesign</strong> (Score: 31) &#8212; Engagement already trending up organically.</div></div>
+</div>
+<div class="chat-input-area">
+<div class="chat-chips">
+<button class="chat-chip" onclick="askChip(this)">What shipped this week?</button>
+<button class="chat-chip" onclick="askChip(this)">Show me alerts</button>
+<button class="chat-chip" onclick="askChip(this)">Impact of OTP revamp?</button>
+<button class="chat-chip" onclick="askChip(this)">Sprint priorities</button>
+</div>
+<div class="chat-input-row">
+<input type="text" class="chat-input" id="chatInput" placeholder="Ask Pulse anything..." onkeydown="if(event.key==='Enter')sendChat()">
+<button class="chat-send" onclick="sendChat()">Send</button>
+</div>
+</div>
+</div>
+</div>
+
+</div><!-- content-wrap -->
+</div><!-- main-area -->
+</div><!-- app -->
+
+<!-- ===== MODALS ===== -->
+
+<!-- Share/Download Modal -->
+<div class="modal-overlay" id="shareModal" onclick="if(event.target===this)hideModal('shareModal')">
+<div class="modal" style="position:relative">
+<h3>Download & Share Report</h3>
+<div class="modal-row" onclick="shareAction('pdf')"><div class="modal-icon">📄</div><div class="modal-text"><strong>Download as PDF</strong><span>Full Sprint 24 report with charts</span></div></div>
+<div class="modal-row" onclick="shareAction('excel')"><div class="modal-icon">📊</div><div class="modal-text"><strong>Export to Excel</strong><span>Raw data — metrics, features, impact scores</span></div></div>
+<div class="modal-row" onclick="shareAction('link')"><div class="modal-icon">🔗</div><div class="modal-text"><strong>Copy Share Link</strong><span>Anyone at Wiom can view with this link</span></div></div>
+<div style="border-top:1px solid var(--bg4);margin:12px 0;"></div>
+<div class="modal-row" onclick="shareAction('email')"><div class="modal-icon">📧</div><div class="modal-text"><strong>Email to Team</strong><span>Send report to specific team members</span></div></div>
+<div class="modal-row" onclick="shareAction('slack')"><div class="modal-icon">⚡</div><div class="modal-text"><strong>Post to Slack</strong><span>Share in #wiom-pulse or any channel</span></div></div>
+<div class="modal-row" onclick="shareAction('whatsapp')"><div class="modal-icon">💬</div><div class="modal-text"><strong>Send via WhatsApp</strong><span>Share summary to any stakeholder</span></div></div>
+</div>
+</div>
+
+<!-- Schedule Channels Modal -->
+<div class="modal-overlay" id="scheduleModal" onclick="if(event.target===this)hideModal('scheduleModal')">
+<div class="modal" style="position:relative">
+<h3>Channel Schedule Settings</h3>
+<p style="font-size:13px;color:var(--tx3);margin-bottom:16px">Configure when Pulse delivers updates on each channel</p>
+<div class="sched-row">
+<div class="sched-label"><span>📱</span> Widget</div>
+<select class="sched-select"><option>Always Live</option><option>Business Hours</option></select>
+<span style="font-size:12px;color:var(--tx3)">Updates in real-time</span>
+</div>
+<div class="sched-row">
+<div class="sched-label"><span>💬</span> WhatsApp</div>
+<select class="sched-select"><option>Weekly</option><option>Daily</option><option>Bi-weekly</option></select>
+<select class="sched-select"><option>Monday</option><option>Tuesday</option><option>Wednesday</option><option>Thursday</option><option>Friday</option></select>
+<input type="time" class="sched-time" value="09:00">
+</div>
+<div class="sched-row">
+<div class="sched-label"><span>📧</span> Email</div>
+<select class="sched-select"><option>Weekly</option><option>Daily</option><option>Bi-weekly</option></select>
+<select class="sched-select"><option>Monday</option><option>Tuesday</option><option>Wednesday</option><option>Thursday</option><option>Friday</option></select>
+<input type="time" class="sched-time" value="09:00">
+</div>
+<div class="sched-row">
+<div class="sched-label"><span>⚡</span> Slack</div>
+<select class="sched-select"><option>Weekly</option><option>Daily</option><option>Per Release</option></select>
+<select class="sched-select"><option>Monday</option><option>Tuesday</option><option>Wednesday</option><option>Thursday</option><option>Friday</option></select>
+<input type="time" class="sched-time" value="09:00">
+</div>
+<div class="sched-row">
+<div class="sched-label"><span>📊</span> Dashboard</div>
+<select class="sched-select"><option>Always Live</option><option>Business Hours</option></select>
+<span style="font-size:12px;color:var(--tx3)">Auto-refreshes</span>
+</div>
+<div style="margin-top:12px;padding:10px;background:var(--p2);border-radius:8px;font-size:12px;color:var(--tx2)">
+<strong style="color:var(--p)">Critical Alerts</strong> are always sent immediately on all channels regardless of schedule.
+</div>
+<button class="sched-save" onclick="saveSchedule()">Save Schedule</button>
+</div>
+</div>
+
+<!-- Quick Send Modal -->
+<div class="modal-overlay" id="quickSendModal" onclick="if(event.target===this)hideModal('quickSendModal')">
+<div class="modal" style="position:relative">
+<h3>Quick Send Dashboard Data</h3>
+<p style="font-size:13px;color:var(--tx3);margin-bottom:16px">Instantly share current dashboard snapshot</p>
+<div style="margin-bottom:16px">
+<label style="font-size:13px;font-weight:700;color:var(--tx);display:block;margin-bottom:6px">Select data to include:</label>
+<div style="display:flex;flex-wrap:wrap;gap:8px">
+<label style="display:flex;align-items:center;gap:4px;font-size:13px;color:var(--tx2);cursor:pointer"><input type="checkbox" checked> Key Stats</label>
+<label style="display:flex;align-items:center;gap:4px;font-size:13px;color:var(--tx2);cursor:pointer"><input type="checkbox" checked> Highlights</label>
+<label style="display:flex;align-items:center;gap:4px;font-size:13px;color:var(--tx2);cursor:pointer"><input type="checkbox" checked> Alerts</label>
+<label style="display:flex;align-items:center;gap:4px;font-size:13px;color:var(--tx2);cursor:pointer"><input type="checkbox"> Upcoming Releases</label>
+<label style="display:flex;align-items:center;gap:4px;font-size:13px;color:var(--tx2);cursor:pointer"><input type="checkbox"> Impact Analysis</label>
+</div>
+</div>
+<div style="margin-bottom:16px">
+<label style="font-size:13px;font-weight:700;color:var(--tx);display:block;margin-bottom:6px">Add a note (optional):</label>
+<textarea style="width:100%;padding:8px 12px;border:1px solid var(--bg4);border-radius:8px;font-family:inherit;font-size:13px;resize:vertical;height:60px;background:var(--bg2);color:var(--tx)" placeholder="e.g. Pls review the OTP drop-off before standup..."></textarea>
+</div>
+<label style="font-size:13px;font-weight:700;color:var(--tx);display:block;margin-bottom:8px">Send via:</label>
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+<div class="modal-row" style="margin-bottom:0;justify-content:center;flex-direction:column;text-align:center;padding:14px 8px" onclick="shareAction('email')"><span style="font-size:24px">📧</span><strong style="font-size:12px;margin-top:4px">Email</strong></div>
+<div class="modal-row" style="margin-bottom:0;justify-content:center;flex-direction:column;text-align:center;padding:14px 8px" onclick="shareAction('whatsapp')"><span style="font-size:24px">💬</span><strong style="font-size:12px;margin-top:4px">WhatsApp</strong></div>
+<div class="modal-row" style="margin-bottom:0;justify-content:center;flex-direction:column;text-align:center;padding:14px 8px" onclick="shareAction('slack')"><span style="font-size:24px">⚡</span><strong style="font-size:12px;margin-top:4px">Slack</strong></div>
+</div>
+</div>
+</div>
+
+<!-- Toast -->
+<div class="action-toast" id="actionToast"></div>
+
+<script>
+const pageTitles={overview:'Overview',prerelease:'Pre-Release Intelligence',livemon:'Live Monitoring',impact:'Impact Analysis',learning:'Learning Loop',channels:'Distribution Channels',askpulse:'Ask Pulse'};
+
+function showPage(id){
+var shimmer=document.getElementById('shimmer');
+shimmer.classList.add('show');
+var navItems=document.querySelectorAll('.nav-item');
+for(var i=0;i<navItems.length;i++){
+navItems[i].classList.toggle('active',navItems[i].getAttribute('data-page')===id);
+}
+document.getElementById('topTitle').textContent=pageTitles[id]||id;
+setTimeout(function(){
+var pages=document.querySelectorAll('.page');
+for(var i=0;i<pages.length;i++) pages[i].classList.remove('active');
+document.getElementById('page-'+id).classList.add('active');
+shimmer.classList.remove('show');
+document.getElementById('contentWrap').scrollTop=0;
+},200);
+}
+
+function showTab(page,tabId){
+var pageEl=document.getElementById('page-'+page);
+var tabBtns=pageEl.querySelectorAll('.tab-btn');
+for(var i=0;i<tabBtns.length;i++) tabBtns[i].classList.remove('active');
+event.target.classList.add('active');
+var allTabs=pageEl.querySelectorAll('.tab-content');
+for(var i=0;i<allTabs.length;i++) allTabs[i].classList.remove('active');
+document.getElementById(tabId).classList.add('active');
+}
+
+function toggleExpand(header){
+header.parentElement.classList.toggle('open');
+}
+
+function filterKB(){
+var q=document.getElementById('kbSearch').value.toLowerCase();
+var items=document.querySelectorAll('.kb-item');
+for(var i=0;i<items.length;i++){
+var searchText=items[i].getAttribute('data-search')+' '+items[i].querySelector('.expandable-header span').textContent.toLowerCase();
+items[i].style.display=searchText.indexOf(q)>=0?'':'none';
+}
+}
+
+var chipResponses={
+'What shipped this week?':'This week, <strong>7 features</strong> were shipped across 4 pods:<br><br>1. <strong>Recharge Flow v2</strong> (Platform) &#8212; Simplified 4-step recharge with UPI autopay<br>2. <strong>Plan Comparison Page</strong> (App) &#8212; Side-by-side comparison with savings calculator<br>3. <strong>OTP Revamp</strong> (Platform) &#8212; WhatsApp OTP + auto-read<br>4. <strong>Installer App v3</strong> (Field Ops) &#8212; Offline-first mode<br>5. <strong>Usage Insights Card</strong> (App) &#8212; Data consumption breakdown on home screen<br>6. <strong>Support Chat Widget</strong> (Platform) &#8212; In-app chat for quick resolution<br>7. <strong>Network Status Banner</strong> (App) &#8212; Proactive outage notifications<br><br>Overall sprint velocity: <strong>87% of planned scope</strong> delivered.',
+'Show me alerts':'There is currently <strong>1 active alert</strong>:<br><br><strong>CRITICAL: Recharge Success Rate Drop</strong><br>Dropped 8% in Delhi cluster since deployment 6 hours ago. Root cause: Payment gateway timeout spike in Tier-2 cities.<br><br>Suggested action: Rollback for Delhi cluster or deploy hotfix for gateway timeout handling.<br><br><em>No other active alerts. Last resolved alert was OTP delivery latency spike (Mar 17, resolved in 2 hours).</em>',
+'Impact of OTP revamp?':'The <strong>OTP Revamp</strong> has been a strong performer:<br><br><strong>Login success rate: +9.4%</strong> (target was +5%)<br>WhatsApp OTP delivery: 98.1% success, 3x faster than SMS<br>Auto-read adoption: 72% of Android users<br><br><strong>Geo breakdown:</strong><br>&#8226; UP East: +14% (highest impact)<br>&#8226; Bihar: +11%<br>&#8226; National average: +9.4%<br><br><strong>Support impact:</strong> Auth-related tickets down 18% since launch.<br><br>Recommendation: Extend WhatsApp OTP to recharge flow to address the current OTP drop-off issue.',
+'Sprint priorities':'Based on the latest impact data, here are the <strong>recommended priorities for Sprint 25</strong>:<br><br>1. <strong>[FIX] Recharge OTP drop-off</strong> &#8212; Score: 92<br>40% of recharge attempts affected. Revenue-critical.<br><br>2. <strong>[EXPAND] Plan comparison to Tier-2</strong> &#8212; Score: 78<br>Proven +14% in Tier-1. Large addressable base in Tier-2.<br><br>3. <strong>[NEW] Post-recharge plan nudge</strong> &#8212; Score: 67<br>Counter the -6% plan upgrade cannibalization.<br><br>4. <strong>[INVESTIGATE] Gateway latency</strong> &#8212; Score: 55<br>Cross-pod with payments provider. SLA review needed.<br><br>5. <strong>[DEPRIORITIZE] Dashboard redesign</strong> &#8212; Score: 31<br>Engagement trending up without intervention.'
+};
+
+function askChip(btn){
+var q=btn.textContent;
+addUserMsg(q);
+showTyping(function(){addBotMsg(chipResponses[q]||'I don\'t have data on that yet.');});
+}
+
+function sendChat(){
+var input=document.getElementById('chatInput');
+var q=input.value.trim();
+if(!q)return;
+input.value='';
+addUserMsg(q);
+var lower=q.toLowerCase();
+var response=null;
+if(lower.indexOf('ship')>=0||lower.indexOf('deploy')>=0||lower.indexOf('release')>=0)response=chipResponses['What shipped this week?'];
+else if(lower.indexOf('alert')>=0||lower.indexOf('issue')>=0||lower.indexOf('problem')>=0)response=chipResponses['Show me alerts'];
+else if(lower.indexOf('otp')>=0||lower.indexOf('login')>=0||lower.indexOf('auth')>=0)response=chipResponses['Impact of OTP revamp?'];
+else if(lower.indexOf('priorit')>=0||lower.indexOf('sprint')>=0||lower.indexOf('next')>=0)response=chipResponses['Sprint priorities'];
+else if(lower.indexOf('recharge')>=0)response='The <strong>Recharge Flow v2</strong> was deployed this week. Current status:<br><br>&#8226; Success rate: <strong>85.2%</strong> (down 3% from baseline)<br>&#8226; Root cause: OTP drop-off (60%) + Gateway timeouts (30%)<br>&#8226; Rollout: 20% &#8212; paused for Tier-2/3<br>&#8226; Active alert on Delhi cluster<br><br>Recommendation: Fix OTP UX and escalate gateway issue before expanding rollout.';
+else if(lower.indexOf('plan')>=0||lower.indexOf('upgrade')>=0)response='The <strong>Plan Comparison Page</strong> is performing well:<br><br>&#8226; Plan upgrades: <strong>+14% nationally</strong><br>&#8226; Maharashtra leading at +22%<br>&#8226; Fully rolled out, no issues<br><br>However, there is a <strong>cannibalization signal</strong>: plan upgrade rate dropped 6% since Recharge Flow v2 launch. Suggested fix: Add plan nudge post-recharge.';
+else if(lower.indexOf('nps')>=0||lower.indexOf('satisfaction')>=0)response='<strong>NPS this week: 42</strong> (up from 38 last week)<br><br>Top promoter driver: Installer experience ("easy setup" mentioned 14 times)<br>Top detractor driver: Recharge payment issues (8 support tickets)<br><br>Trend: NPS has improved 4 points over 2 weeks, primarily driven by Field Ops improvements.';
+else response='I can help you with release intelligence across all pods. Try asking about:<br><br>&#8226; What shipped this week<br>&#8226; Active alerts and issues<br>&#8226; Impact of specific features (OTP, recharge, plans)<br>&#8226; Sprint priorities<br>&#8226; NPS and user feedback<br><br>What would you like to know?';
+showTyping(function(){addBotMsg(response);});
+}
+
+function addUserMsg(text){
+var div=document.createElement('div');
+div.className='chat-msg user';
+div.innerHTML='<div class="chat-avatar">YG</div><div class="chat-bubble">'+escHtml(text)+'</div>';
+document.getElementById('chatMessages').appendChild(div);
+scrollChat();
+}
+
+function addBotMsg(html){
+var div=document.createElement('div');
+div.className='chat-msg bot';
+div.innerHTML='<div class="chat-avatar">&#8734;</div><div class="chat-bubble">'+html+'</div>';
+document.getElementById('chatMessages').appendChild(div);
+scrollChat();
+}
+
+function showTyping(cb){
+var div=document.createElement('div');
+div.className='chat-msg bot';
+div.id='typingInd';
+div.innerHTML='<div class="chat-avatar">&#8734;</div><div class="chat-bubble"><div class="typing-dots"><span></span><span></span><span></span></div></div>';
+document.getElementById('chatMessages').appendChild(div);
+scrollChat();
+setTimeout(function(){div.remove();cb();},1500);
+}
+
+function scrollChat(){
+var c=document.getElementById('chatMessages');
+c.scrollTop=c.scrollHeight;
+}
+
+/* ===== FEATURE: Share/Download/Quick Send/Nudge ===== */
+function showModal(id){document.getElementById(id).style.display='flex';}
+function hideModal(id){document.getElementById(id).style.display='none';}
+
+function shareAction(type){
+var toast=document.getElementById('actionToast');
+var msgs={'pdf':'Generating PDF report...','excel':'Exporting to Excel...','link':'Share link copied to clipboard!','email':'Opening email composer...','whatsapp':'Sending via WhatsApp...','slack':'Posting to #wiom-pulse...'};
+toast.textContent=msgs[type]||'Action triggered!';
+toast.classList.add('show');
+setTimeout(function(){toast.classList.remove('show');},2500);
+hideModal('shareModal');hideModal('quickSendModal');
+}
+
+function saveSchedule(){
+var toast=document.getElementById('actionToast');
+toast.textContent='Channel schedules saved successfully!';
+toast.classList.add('show');
+setTimeout(function(){toast.classList.remove('show');},2500);
+hideModal('scheduleModal');
+}
+
+function nudgeAction(team,channel){
+var toast=document.getElementById('actionToast');
+toast.textContent='Nudge sent to '+team+' via '+channel+'!';
+toast.classList.add('show');
+setTimeout(function(){toast.classList.remove('show');},2500);
+var dropdown=document.querySelector('.nudge-dropdown.show');
+if(dropdown)dropdown.classList.remove('show');
+}
+
+function toggleNudge(btn){
+var dd=btn.nextElementSibling;
+dd.classList.toggle('show');
+document.addEventListener('click',function handler(e){
+if(!btn.contains(e.target)&&!dd.contains(e.target)){dd.classList.remove('show');document.removeEventListener('click',handler);}
+},{once:false});
+}
+
+function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+</script>
+</body>
+</html>
